@@ -1188,7 +1188,11 @@
         const el = $('qrBig'); el.textContent = '';
         if (!myId) return;
         try { new QRCode(el, { text: inviteUrl(), width: 512, height: 512, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); } catch {}
-        $('qrCaption').textContent = hostMode() === 'room' ? `Escanéalo para unirte a la sala «${myId}»` : `Escanéalo para abrir un chat directo conmigo («${myId}»)`;
+        const targetId = role === 'guest' && hostIdOfRoom ? hostIdOfRoom : myId;
+        const targetMode = role !== 'solo' ? curMode() : hostMode();
+        $('qrCaption').textContent = targetMode === 'room'
+            ? `Escanéalo para unirte a la sala «${targetId}»`
+            : `Escanéalo para abrir un chat directo con «${targetId}»`;
     }
     function generateQR() { if (qrOpen()) renderBigQR(); }
     function openQr() {
@@ -1196,7 +1200,17 @@
         renderBigQR(); qrModal.classList.remove('hidden'); $('closeQrBtn').focus();
     }
     function closeQr() { qrModal.classList.add('hidden'); }
-    function inviteUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('room', myId); u.searchParams.set('mode', hostMode()); return u.toString(); }
+    function inviteUrl() {
+        const u = new URL(location.href);
+        u.search = ''; u.hash = '';
+        // Si ya estás conectado como invitado, comparte el ID del anfitrión,
+        // no tu propio ID. Así el QR/enlace vuelve a la misma sala o chat.
+        const targetId = role === 'guest' && hostIdOfRoom ? hostIdOfRoom : myId;
+        const targetMode = role !== 'solo' ? curMode() : hostMode();
+        u.searchParams.set('room', targetId);
+        u.searchParams.set('mode', targetMode);
+        return u.toString();
+    }
     async function copyText(text) {
         try { await navigator.clipboard.writeText(text); return true; }
         catch { const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.append(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} t.remove(); return ok; }
