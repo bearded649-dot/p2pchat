@@ -555,7 +555,7 @@
                         <input type="file" id="imageInput" accept="image/*" class="hidden">
                         <button type="button" id="uploadImgBtn" class="btn btn-ghost" style="padding:.5rem" title="Enviar imagen o sticker (también puedes pegar o arrastrar)" aria-label="Enviar imagen" disabled><i data-lucide="image" class="w-4 h-4"></i></button>
                         <label for="chatInput" class="sr-only">Mensaje</label>
-                        <textarea id="chatInput" rows="1" maxlength="5000" class="field flex-1 px-3 py-2 text-xs resize-none leading-normal max-h-24" placeholder="Conéctate para escribir…" disabled></textarea>
+                        <textarea id="chatInput" rows="1" maxlength="5000" class="field flex-1 px-3 py-2 text-xs resize-none leading-normal max-h-24" placeholder="Mensaje…" disabled></textarea>
                         <button type="submit" id="sendMsgBtn" class="btn btn-primary" style="padding:.5rem .8rem" aria-label="Enviar mensaje" disabled><i data-lucide="send" class="w-4 h-4"></i></button>
                     </form>
                 </section>
@@ -904,7 +904,7 @@
         }
         const inRoom = role !== 'solo';
         chatInput.disabled = !inRoom; sendMsgBtn.disabled = !inRoom; uploadImgBtn.disabled = !inRoom;
-        chatInput.placeholder = inRoom ? 'Escribe un mensaje…  (Enter envía, Shift+Enter = salto)' : 'Conéctate para escribir…';
+        chatInput.placeholder = inRoom ? 'Mensaje… (Enter envía)' : 'Mensaje…';
         const chatBadge = $('chatPeerBadge');
         chatBadge.className = 'chip ' + (inRoom ? 'connected' : 'neutral'); chatBadge.style.cssText = 'padding:.1rem .5rem;font-size:.62rem';
         chatBadge.textContent = inRoom ? `${n} en línea` : 'Sin conexión';
