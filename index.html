@@ -451,7 +451,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <button id="createRoomBtn" type="button" class="btn btn-primary room-action">
                             <span class="ico"><i data-lucide="plus-circle" class="w-5 h-5"></i></span>
-                            <span><strong>Crear sala</strong><small>Sala de grupo para varias personas (hasta 8 invitados) · enlace o QR</small></span>
+                            <span><strong>Crear sala</strong><small>Sala de grupo para hasta 8 personas en total, incluido el anfitrión · enlace o QR</small></span>
                         </button>
                         <button id="joinRoomBtn" type="button" class="btn btn-ghost room-action">
                             <span class="ico"><i data-lucide="log-in" class="w-5 h-5"></i></span>
@@ -658,7 +658,7 @@
         return 'sala-' + Array.from(r, (n) => a[n % a.length]).join('');
     };
     const IMG_RE = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/;
-    const MAX_PEERS = 8;
+    const MAX_ROOM_PEOPLE = 8; // Máximo total en la sala, incluido el anfitrión
 
     // ---------- Referencias DOM ----------
     const themeSelect = $('themeSelect'), spongebobBadge = $('spongebobBadge');
@@ -1230,13 +1230,17 @@
             if (wanted !== hm) return rejectNow(hm === 'room' ? 'isroom' : 'isdm');
             const readyCount = [...conns.values()].filter((e) => e.ready).length;
             if (hm === 'dm' && readyCount >= 1) return rejectNow('dmfull');
-            if (readyCount >= MAX_PEERS) return rejectNow('full');
+            // Cuenta también las conexiones que aún están negociando para evitar
+            // que varias solicitudes simultáneas superen el máximo de la sala.
+            // El anfitrión ocupa una plaza: 8 personas en total = 7 invitados.
+            if (hm === 'room' && conns.size > MAX_ROOM_PEOPLE - 1) return rejectNow('full');
             if (roomSettings.approve) {
                 beep();
                 const ok = await dialog({ title: 'Solicitud de conexión', message: `«${name}» quiere unirse a tu sala.`, okText: 'Permitir', cancelText: 'Rechazar' });
                 if (!ok || conns.get(entry.conn.peer) !== entry || !entry.conn.open) { safeSend(entry.conn, { type: 'REJECT', reason: 'denied' }); setTimeout(() => entry.conn.close(), 300); return; }
             }
             if (hm === 'dm' && [...conns.values()].some((e) => e.ready)) return rejectNow('dmfull');
+            if (hm === 'room' && conns.size > MAX_ROOM_PEOPLE - 1) return rejectNow('full');
             acceptGuest(entry, name); return;
         }
         if (!entry.ready) return;
