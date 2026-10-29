@@ -1,0 +1,1417 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0f172a">
+    <title>P2P Workspace Pro - Editor & Chat Colaborativo</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+    <style>
+        /* ===== Temas: 8 variables base; el resto se deriva con color-mix ===== */
+        :root, [data-theme="dark"] {
+            --bg-main: #0f172a; --bg-card: #1e293b; --border-color: #334155;
+            --color-primary: #6366f1; --color-primary-hover: #4f46e5; --on-primary: #ffffff;
+            --color-text: #f8fafc; --color-muted: #94a3b8;
+            --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+            color-scheme: dark;
+        }
+        [data-theme="light"] {
+            --bg-main: #f1f5f9; --bg-card: #ffffff; --border-color: #cbd5e1;
+            --color-primary: #4f46e5; --color-primary-hover: #4338ca; --on-primary: #ffffff;
+            --color-text: #0f172a; --color-muted: #64748b;
+            color-scheme: light;
+        }
+        [data-theme="spongebob"] {
+            --bg-main: #0284c7; --bg-card: #0ea5e9; --border-color: #fde047;
+            --color-primary: #facc15; --color-primary-hover: #eab308; --on-primary: #1e3a8a;
+            --color-text: #ffffff; --color-muted: #e0f2fe;
+            --font-family: 'Comic Sans MS', 'Chalkboard SE', 'Comic Neue', cursive, sans-serif;
+        }
+        [data-theme="cyberpunk"] {
+            --bg-main: #09090b; --bg-card: #18181b; --border-color: #f43f5e;
+            --color-primary: #06b6d4; --color-primary-hover: #0891b2; --on-primary: #001018;
+            --color-text: #f4f4f5; --color-muted: #a1a1aa;
+            --font-family: 'Courier New', Courier, monospace;
+        }
+        [data-theme="forest"] {
+            --bg-main: #052e16; --bg-card: #14532d; --border-color: #22c55e;
+            --color-primary: #10b981; --color-primary-hover: #059669; --on-primary: #022c22;
+            --color-text: #f0fdf4; --color-muted: #86efac;
+        }
+        [data-theme="dracula"] {
+            --bg-main: #282a36; --bg-card: #44475a; --border-color: #6272a4;
+            --color-primary: #ff79c6; --color-primary-hover: #bd93f9; --on-primary: #1e1f29;
+            --color-text: #f8f8f2; --color-muted: #8be9fd;
+            --font-family: 'Fira Code', Consolas, monospace;
+        }
+
+        :root {
+            --sub:   color-mix(in srgb, var(--color-text) 7%, transparent);
+            --line:  color-mix(in srgb, var(--color-text) 15%, transparent);
+            --field: color-mix(in srgb, var(--bg-main) 60%, var(--bg-card));
+            --ok: #34d399; --warn: #fbbf24; --bad: #f87171; --info: #38bdf8;
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg-main); color: var(--color-text);
+            font-family: var(--font-family);
+            transition: background-color .3s ease, color .3s ease;
+        }
+        button, input, select, textarea { font-family: inherit; }
+
+        .card   { background: var(--bg-card); border: 1px solid var(--border-color); }
+        .sub    { background: var(--sub); }
+        .bt     { border-top: 1px solid var(--line); }
+        .bb     { border-bottom: 1px solid var(--line); }
+        .muted  { color: var(--color-muted); }
+        .field  { background: var(--field); border: 1px solid var(--line); color: var(--color-text); border-radius: .5rem; }
+        .field::placeholder { color: var(--color-muted); opacity: .7; }
+        .field:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -1px; }
+        .field:disabled { opacity: .5; cursor: not-allowed; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: .375rem;
+               padding: .45rem .8rem; border-radius: .5rem; font-size: .75rem; font-weight: 600;
+               border: 1px solid transparent; cursor: pointer; transition: background-color .15s, opacity .15s, transform .05s; }
+        .btn:active:not(:disabled) { transform: translateY(1px); }
+        .btn:disabled { opacity: .4; cursor: not-allowed; }
+        .btn:focus-visible, .icon-btn:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+        .btn-primary { background: var(--color-primary); color: var(--on-primary); }
+        .btn-primary:hover:not(:disabled) { background: var(--color-primary-hover); }
+        .btn-ghost { background: var(--sub); border-color: var(--line); color: var(--color-text); }
+        .btn-ghost:hover:not(:disabled) { background: var(--line); }
+        .btn-danger { background: #e11d48; color: #fff; }
+        .btn-danger:hover:not(:disabled) { background: #be123c; }
+        .icon-btn { display: inline-flex; align-items: center; justify-content: center; padding: .3rem; border-radius: .4rem;
+                    background: transparent; color: inherit; opacity: .8; cursor: pointer; border: 0; transition: background-color .15s, opacity .15s; }
+        .icon-btn:hover { opacity: 1; background: var(--sub); }
+        .icon-btn.danger:hover { color: var(--bad); }
+
+        .chip { display: inline-flex; align-items: center; gap: .4rem; padding: .3rem .7rem; border-radius: 999px;
+                font-size: .72rem; font-weight: 600; border: 1px solid transparent; }
+        .chip.waiting      { background: rgba(251,191,36,.12); color: var(--warn); border-color: rgba(251,191,36,.3); }
+        .chip.connecting   { background: rgba(56,189,248,.12); color: var(--info); border-color: rgba(56,189,248,.3); }
+        .chip.connected    { background: rgba(52,211,153,.12); color: var(--ok);   border-color: rgba(52,211,153,.3); }
+        .chip.disconnected { background: rgba(248,113,113,.12); color: var(--bad); border-color: rgba(248,113,113,.3); }
+        .chip.neutral      { background: var(--sub); border-color: var(--line); color: var(--color-muted); }
+        .dot { width: .5rem; height: .5rem; border-radius: 999px; background: currentColor; }
+        .waiting .dot, .connecting .dot { animation: pulse 1.4s ease-in-out infinite; }
+        @keyframes pulse { 50% { opacity: .35; } }
+
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--color-primary); }
+
+        #documentEditor { font-family: 'Fira Code', ui-monospace, 'Cascadia Code', Menlo, Consolas, monospace; tab-size: 4; }
+        #documentEditor.nowrap { white-space: pre; overflow-x: auto; }
+        #documentEditor:read-only { opacity: .85; cursor: not-allowed; }
+
+        .bubble { border-radius: .9rem; padding: .45rem .7rem; font-size: .8rem; line-height: 1.4;
+                  white-space: pre-wrap; word-break: break-word; max-width: 85%; }
+        .bubble.me   { background: var(--color-primary); color: var(--on-primary); border-bottom-right-radius: .25rem; }
+        .bubble.them { background: var(--sub); border: 1px solid var(--line); border-bottom-left-radius: .25rem; }
+        .bubble a { text-decoration: underline; }
+        .chat-img { max-width: 200px; max-height: 200px; object-fit: contain; border-radius: 12px; cursor: zoom-in;
+                    border: 1px solid var(--line); transition: transform .2s; }
+        .chat-img:hover { transform: scale(1.02); }
+        .avatar { width: 1.6rem; height: 1.6rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center;
+                  font-size: .7rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+
+        .switch { display: flex; align-items: center; justify-content: space-between; gap: .75rem; font-size: .72rem; cursor: pointer; }
+        .switch input { accent-color: var(--color-primary); width: 1rem; height: 1rem; }
+        .switch input:disabled { cursor: not-allowed; }
+
+        [data-theme="spongebob"] .spongebob-decor { background-image: radial-gradient(#fde047 15%, transparent 16%); background-size: 20px 20px; }
+
+        .drop-active { outline: 2px dashed var(--color-primary); outline-offset: -6px; }
+        .backdrop { background: rgba(0,0,0,.65); backdrop-filter: blur(4px); }
+
+        #toast { transform: translateY(5rem); opacity: 0; transition: all .3s; pointer-events: none; }
+        #toast.show { transform: translateY(0); opacity: 1; }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+    </style>
+
+    <style id="ui-v2">
+        /* ===== Capa visual v2: variables estructurales (los temas las sobreescriben) ===== */
+        :root {
+            --radius: 16px; --radius-sm: 10px; --btn-radius: 10px; --field-radius: 10px; --bubble-radius: 16px;
+            --body-bg: radial-gradient(900px 480px at 8% -8%, color-mix(in srgb, var(--color-primary) 22%, transparent), transparent 60%),
+                       radial-gradient(700px 420px at 100% 0, color-mix(in srgb, var(--ok) 10%, transparent), transparent 60%), var(--bg-main);
+            --card-bg: var(--bg-card);
+            --card-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent), 0 12px 30px -16px rgba(0,0,0,.5);
+            --card-blur: none;
+            --header-bg: color-mix(in srgb, var(--bg-card) 78%, transparent);
+            --header-fg: var(--color-text);
+            --btn-primary-bg: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 86%, #fff), var(--color-primary));
+            --btn-primary-hover-bg: var(--color-primary-hover); --btn-primary-border: transparent;
+            --btn-ghost-bg: var(--sub); --btn-ghost-hover-bg: var(--line); --btn-ghost-border: var(--line);
+            --btn-border: transparent; --btn-shadow: 0 1px 2px rgba(0,0,0,.18);
+            --field-bg: var(--field); --field-border: var(--line); --field-shadow: none;
+            --bubble-me-bg: var(--color-primary); --bubble-me-fg: var(--on-primary); --bubble-them-bg: var(--sub);
+            --chat-bg: transparent; --opt-bg: var(--bg-card);
+        }
+        body { background: var(--body-bg); background-attachment: fixed; }
+        .card { background: var(--card-bg); border: 1px solid var(--border-color); box-shadow: var(--card-shadow) !important;
+                -webkit-backdrop-filter: var(--card-blur); backdrop-filter: var(--card-blur); }
+        .rounded-xl, .rounded-2xl { border-radius: var(--radius) !important; }
+        .rounded-lg { border-radius: var(--radius-sm) !important; }
+        .app-header { background: var(--header-bg) !important; color: var(--header-fg);
+                      -webkit-backdrop-filter: blur(14px) saturate(1.4); backdrop-filter: blur(14px) saturate(1.4); }
+        .app-header select { color: var(--header-fg) !important; }
+        .app-header .muted { color: inherit; opacity: .72; }
+        select option { background: var(--opt-bg); color: var(--color-text); }
+
+        .btn { border-radius: var(--btn-radius); border: 1px solid var(--btn-border); box-shadow: var(--btn-shadow); }
+        .btn:hover:not(:disabled) { transform: translateY(-1px); }
+        .btn-primary, .menu-tab.active { background: var(--btn-primary-bg); color: var(--on-primary); border-color: var(--btn-primary-border); }
+        .btn-primary:hover:not(:disabled) { background: var(--btn-primary-hover-bg); }
+        .btn-ghost, .menu-tab { background: var(--btn-ghost-bg); border-color: var(--btn-ghost-border); color: var(--color-text); }
+        .btn-ghost:hover:not(:disabled), .menu-tab:hover:not(.active) { background: var(--btn-ghost-hover-bg); }
+        .field { background: var(--field-bg); border: 1px solid var(--field-border); border-radius: var(--field-radius); box-shadow: var(--field-shadow); }
+        .field:focus-visible { box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 30%, transparent); }
+
+        .menu-tabs { display: flex; flex-wrap: wrap; gap: .4rem; }
+        .menu-tab { padding: .5rem 1.1rem; font-size: .8rem; }
+        [data-panel]:not(.hidden) { animation: fadeIn .25s ease both; }
+        .room-action { justify-content: flex-start; text-align: left; padding: .85rem 1rem; gap: .8rem; font-size: .85rem; border-radius: var(--radius-sm); }
+        .room-action small { display: block; font-weight: 400; opacity: .8; font-size: .7rem; margin-top: .1rem; }
+        .room-action .ico { display: grid; place-items: center; width: 2.3rem; height: 2.3rem; border-radius: 999px; background: rgba(255,255,255,.2); flex-shrink: 0; }
+
+        .bubble { border-radius: var(--bubble-radius); }
+        .bubble.me { background: var(--bubble-me-bg); color: var(--bubble-me-fg); border-bottom-right-radius: 4px; }
+        .bubble.them { background: var(--bubble-them-bg); color: var(--color-text); border-bottom-left-radius: 4px; }
+        #chatContainer { background: var(--chat-bg); }
+        #chatContainer > div { animation: fadeIn .25s ease both; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } }
+        .avatar { box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg-card) 80%, transparent); }
+        #rosterList li { transition: background-color .15s; }
+        #rosterList li:hover { background: var(--line); }
+
+        /* ===== Modal QR (fondo desenfocado, imagen nítida 512x512) ===== */
+        .qr-overlay { position: fixed; inset: 0; z-index: 65; overflow-y: auto; display: flex;
+                      background: rgba(8,12,24,.38); -webkit-backdrop-filter: blur(18px) saturate(1.15); backdrop-filter: blur(18px) saturate(1.15);
+                      animation: fadeIn .2s ease both; }
+        .qr-overlay.hidden { display: none; }
+        .qr-inner { margin: auto; display: flex; flex-direction: column; align-items: center; gap: 30px; padding: 40px 24px; }
+        .qr-frame { width: min(512px, 86vw); aspect-ratio: 1 / 1; background: #fff; border-radius: 2px;
+                    box-shadow: 0 0 0 14px #fff, 0 24px 70px rgba(0,0,0,.55); }
+        .qr-frame img { width: 100% !important; height: 100% !important; display: block; image-rendering: pixelated; }
+        .qr-caption { color: #fff; font-size: .8rem; font-weight: 600; text-shadow: 0 1px 6px rgba(0,0,0,.6); text-align: center; max-width: 90vw; word-break: break-all; }
+        .qr-actions .btn-ghost { background: rgba(255,255,255,.18); color: #fff; border-color: rgba(255,255,255,.38); }
+
+        /* ================= ESTILOS / TEMAS NUEVOS ================= */
+        /* --- Telegram (claro y oscuro) --- */
+        [data-theme="telegram"] {
+            --bg-main: #dfe6ec; --bg-card: #ffffff; --border-color: #dadee2;
+            --color-primary: #3390ec; --color-primary-hover: #2a7fd4; --on-primary: #ffffff;
+            --color-text: #0f1419; --color-muted: #707579;
+            --font-family: Roboto, -apple-system, 'Segoe UI', system-ui, sans-serif; color-scheme: light;
+            --radius: 12px; --radius-sm: 8px; --btn-radius: 8px; --field-radius: 8px; --bubble-radius: 14px;
+            --body-bg: #dfe6ec; --card-shadow: 0 1px 2px rgba(16,35,47,.14); --header-bg: #ffffff;
+            --btn-primary-bg: #3390ec; --btn-shadow: none;
+            --bubble-me-bg: #eeffde; --bubble-me-fg: #0f1419; --bubble-them-bg: #ffffff;
+            --chat-bg: linear-gradient(160deg, #cfe4d2, #b9d6dd 55%, #d5e5c6);
+        }
+        [data-theme="telegram-dark"] {
+            --bg-main: #0e1621; --bg-card: #17212b; --border-color: #0b131c;
+            --color-primary: #5288c1; --color-primary-hover: #4678ad; --on-primary: #ffffff;
+            --color-text: #f5f5f5; --color-muted: #7f91a4;
+            --font-family: Roboto, -apple-system, 'Segoe UI', system-ui, sans-serif; color-scheme: dark;
+            --radius: 12px; --radius-sm: 8px; --btn-radius: 8px; --field-radius: 8px; --bubble-radius: 14px;
+            --body-bg: #0e1621; --card-shadow: none; --header-bg: #17212b;
+            --btn-primary-bg: #5288c1; --btn-shadow: none;
+            --bubble-me-bg: #2b5278; --bubble-me-fg: #ffffff; --bubble-them-bg: #182533;
+            --chat-bg: linear-gradient(160deg, #0e1621, #101c29 60%, #0b141e);
+        }
+        [data-theme^="telegram"] .bubble { box-shadow: 0 1px 1px rgba(16,35,47,.18); }
+        [data-theme^="telegram"] #chatInput { border-radius: 20px; }
+        [data-theme^="telegram"] #sendMsgBtn { border-radius: 50%; width: 2.4rem; height: 2.4rem; padding: 0 !important; }
+        [data-theme^="telegram"] .btn:hover:not(:disabled) { transform: none; }
+
+        /* --- Frutiger Aero --- */
+        [data-theme="frutiger"] {
+            --bg-main: #bfe7f8; --bg-card: rgba(255,255,255,.55); --border-color: rgba(255,255,255,.9);
+            --color-primary: #1d93dc; --color-primary-hover: #0f7cc0; --on-primary: #ffffff;
+            --color-text: #10364f; --color-muted: #3d6c8a;
+            --font-family: 'Segoe UI', Frutiger, 'Trebuchet MS', Verdana, sans-serif; color-scheme: light;
+            --radius: 20px; --radius-sm: 14px; --btn-radius: 999px; --field-radius: 14px; --bubble-radius: 18px;
+            --body-bg: linear-gradient(165deg, #4fb9f2 0%, #9ddcf8 38%, #d9f4c6 78%, #aee67f 100%);
+            --card-bg: linear-gradient(180deg, rgba(255,255,255,.8), rgba(255,255,255,.42));
+            --card-blur: blur(14px) saturate(1.3);
+            --card-shadow: 0 12px 30px -10px rgba(10,80,140,.45), inset 0 1px 0 rgba(255,255,255,.95);
+            --header-bg: linear-gradient(180deg, rgba(255,255,255,.88), rgba(190,232,252,.62));
+            --btn-primary-bg: linear-gradient(180deg, #8be0ff 0%, #2aa4ea 48%, #0f80cc 52%, #3bbcf5 100%);
+            --btn-primary-hover-bg: linear-gradient(180deg, #a6e8ff 0%, #45b5f2 48%, #1f92dd 52%, #57cbfa 100%);
+            --btn-primary-border: #0b6aa8;
+            --btn-ghost-bg: linear-gradient(180deg, rgba(255,255,255,.96), rgba(205,235,250,.78) 50%, rgba(176,222,245,.72) 52%, rgba(228,247,255,.92));
+            --btn-ghost-hover-bg: linear-gradient(180deg, #fff, #d8f2ff 50%, #b9e8ff 52%, #eaf9ff);
+            --btn-ghost-border: rgba(40,130,190,.55);
+            --btn-shadow: 0 2px 5px rgba(0,70,120,.35), inset 0 1px 0 rgba(255,255,255,.9);
+            --field-bg: rgba(255,255,255,.82); --field-border: rgba(60,140,190,.45); --field-shadow: inset 0 2px 4px rgba(0,60,100,.15);
+            --bubble-me-bg: linear-gradient(180deg, #7fd8ff, #1f9de3); --bubble-me-fg: #ffffff;
+            --bubble-them-bg: linear-gradient(180deg, rgba(255,255,255,.96), rgba(225,245,255,.82));
+            --opt-bg: #eaf8ff;
+        }
+        [data-theme="frutiger"] body::before {
+            content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; filter: blur(1px);
+            background:
+                radial-gradient(circle at 18% 28%, rgba(255,255,255,.55) 0 60px, transparent 62px),
+                radial-gradient(circle at 80% 20%, rgba(255,255,255,.40) 0 95px, transparent 97px),
+                radial-gradient(circle at 66% 82%, rgba(255,255,255,.35) 0 125px, transparent 127px),
+                radial-gradient(circle at 10% 86%, rgba(160,240,140,.50) 0 75px, transparent 77px),
+                radial-gradient(circle at 92% 62%, rgba(120,220,255,.45) 0 55px, transparent 57px);
+        }
+        [data-theme="frutiger"] main, [data-theme="frutiger"] footer { position: relative; z-index: 1; }
+        [data-theme="frutiger"] section > .sub.bb { background: linear-gradient(180deg, rgba(255,255,255,.75), rgba(200,235,252,.35)); }
+        [data-theme="frutiger"] .btn-primary, [data-theme="frutiger"] .menu-tab.active { text-shadow: 0 -1px 0 rgba(0,60,110,.45); }
+
+        /* --- Windows 7 (Aero) --- */
+        [data-theme="win7"] {
+            --bg-main: #1b5e9b; --bg-card: #f0f0f0; --border-color: #6a87a8;
+            --color-primary: #2f84cf; --color-primary-hover: #1f6fb8; --on-primary: #0a2540;
+            --color-text: #111111; --color-muted: #555555;
+            --font-family: 'Segoe UI', Tahoma, Arial, sans-serif; color-scheme: light;
+            --radius: 8px; --radius-sm: 4px; --btn-radius: 3px; --field-radius: 2px; --bubble-radius: 6px;
+            --body-bg: radial-gradient(ellipse 80% 55% at 50% 105%, #6fd0ff 0%, rgba(111,208,255,0) 70%),
+                       radial-gradient(ellipse 40% 30% at 20% 10%, rgba(255,255,255,.28), transparent),
+                       linear-gradient(180deg, #0b2f5e 0%, #1666ae 55%, #3a9bd9 100%);
+            --card-bg: linear-gradient(180deg, #f9fafb, #eef1f5);
+            --card-shadow: inset 0 0 0 1px rgba(255,255,255,.7), 0 8px 22px rgba(0,0,0,.5);
+            --header-bg: linear-gradient(180deg, rgba(214,232,250,.92) 0%, rgba(150,192,235,.86) 48%, rgba(120,170,225,.86) 52%, rgba(165,205,240,.92) 100%);
+            --header-fg: #0a1d33;
+            --btn-primary-bg: linear-gradient(180deg, #c8e6fa 0%, #8fcaf0 48%, #4fa6e6 52%, #7cc4f3 100%);
+            --btn-primary-hover-bg: linear-gradient(180deg, #dff1fd 0%, #a9d9f6 48%, #62b4ee 52%, #90d0f8 100%);
+            --btn-primary-border: #2a5f92;
+            --btn-ghost-bg: linear-gradient(180deg, #f6f6f6 0%, #ebebeb 48%, #dddddd 52%, #cfcfcf 100%);
+            --btn-ghost-hover-bg: linear-gradient(180deg, #eaf6fd, #d9f0fc 48%, #bee6fd 52%, #a7d9f5);
+            --btn-ghost-border: #707070; --btn-shadow: inset 0 0 0 1px rgba(255,255,255,.7);
+            --field-bg: #ffffff; --field-border: #abadb3;
+            --bubble-me-bg: linear-gradient(180deg, #e3f2fc, #c4e1f6); --bubble-me-fg: #111111; --bubble-them-bg: #ffffff;
+            --chat-bg: #ffffff;
+        }
+        [data-theme="win7"] section > .sub.bb { background: linear-gradient(180deg, rgba(214,232,250,.95), rgba(165,205,240,.9)); border-bottom: 1px solid #6a87a8; }
+        [data-theme="win7"] .bubble { border: 1px solid #9bbbd6; }
+
+        /* --- Clásico (Windows 95/98) --- */
+        [data-theme="classic"] {
+            --bg-main: #008080; --bg-card: #c0c0c0; --border-color: #808080;
+            --color-primary: #000080; --color-primary-hover: #0000a8; --on-primary: #000000;
+            --color-text: #000000; --color-muted: #404040;
+            --font-family: Tahoma, 'MS Sans Serif', Geneva, Verdana, sans-serif; color-scheme: light;
+            --radius: 0px; --radius-sm: 0px; --btn-radius: 0px; --field-radius: 0px; --bubble-radius: 0px;
+            --body-bg: #008080; --card-bg: #c0c0c0; --card-shadow: none;
+            --header-bg: linear-gradient(90deg, #000080, #1084d0); --header-fg: #ffffff;
+            --btn-primary-bg: #c0c0c0; --btn-primary-hover-bg: #c0c0c0; --btn-ghost-bg: #c0c0c0; --btn-ghost-hover-bg: #c0c0c0;
+            --field-bg: #ffffff; --bubble-me-bg: #ffffe1; --bubble-me-fg: #000000; --bubble-them-bg: #ffffff; --chat-bg: #ffffff;
+        }
+        [data-theme="classic"] .card { border: 2px solid; border-color: #ffffff #404040 #404040 #ffffff; box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf !important; }
+        [data-theme="classic"] .btn, [data-theme="classic"] .icon-btn.sub { border: 2px solid !important; border-color: #ffffff #404040 #404040 #ffffff !important;
+            box-shadow: inset -1px -1px #808080, inset 1px 1px #dfdfdf; background: #c0c0c0; color: #000; }
+        [data-theme="classic"] .btn:active:not(:disabled), [data-theme="classic"] .menu-tab.active { border-color: #404040 #ffffff #ffffff #404040 !important; box-shadow: inset 1px 1px #808080; }
+        [data-theme="classic"] .menu-tab.active { font-weight: 700; }
+        [data-theme="classic"] .btn:hover:not(:disabled) { transform: none; }
+        [data-theme="classic"] .field { border: 2px solid; border-color: #808080 #ffffff #ffffff #808080; box-shadow: inset 1px 1px #404040; }
+        [data-theme="classic"] .bubble { border: 1px solid #000; box-shadow: none; }
+        [data-theme="classic"] .chip, [data-theme="classic"] .avatar { border-radius: 0; }
+        [data-theme="classic"] section > .sub.bb { background: linear-gradient(90deg, #000080, #1084d0); color: #fff; border-bottom: 0; }
+        [data-theme="classic"] section > .sub.bb svg { color: #fff !important; }
+        [data-theme="classic"] ::-webkit-scrollbar-thumb { background: #c0c0c0; border: 2px solid; border-color: #fff #404040 #404040 #fff; border-radius: 0; }
+        [data-theme="classic"] ::-webkit-scrollbar-track { background: #e4e4e4; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased overflow-x-hidden">
+
+    <!-- ===== Header ===== -->
+    <header class="app-header card border-x-0 border-t-0 px-4 py-3 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-3">
+            <div class="flex items-center gap-3">
+                <div class="p-2 rounded-xl" style="color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 18%, transparent);">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold leading-tight flex items-center gap-2">
+                        P2P Workspace Pro
+                        <span id="spongebobBadge" class="hidden text-xs px-2 py-0.5 rounded-full font-bold" style="background: var(--color-primary); color: var(--on-primary);">🧽 Bikini Bottom Edition</span>
+                    </h1>
+                    <p class="text-xs muted">Editor colaborativo P2P (WebRTC + CRDT), sin servidor central</p>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                <div class="flex items-center gap-1.5 sub p-1.5 rounded-lg" style="border:1px solid var(--line)">
+                    <i data-lucide="palette" class="w-4 h-4 muted"></i>
+                    <label for="themeSelect" class="sr-only">Tema</label>
+                    <select id="themeSelect" class="bg-transparent text-xs font-medium cursor-pointer pr-1" style="color: var(--color-text)">
+                        <optgroup label="Colores">
+                            <option value="dark">🌙 Dark Slate</option>
+                            <option value="light">☀️ Claro</option>
+                            <option value="spongebob">🧽 SpongeBob</option>
+                            <option value="cyberpunk">🌆 Cyberpunk</option>
+                            <option value="forest">🌲 Forest</option>
+                            <option value="dracula">🧛‍♂️ Dracula</option>
+                        </optgroup>
+                        <optgroup label="Estilos">
+                            <option value="telegram">✈️ Telegram</option>
+                            <option value="telegram-dark">✈️ Telegram oscuro</option>
+                            <option value="frutiger">🫧 Frutiger Aero</option>
+                            <option value="win7">🪟 Windows 7</option>
+                            <option value="classic">🖥️ Clásico (Windows)</option>
+                        </optgroup>
+                        <option value="custom">🎨 Personalizado…</option>
+                    </select>
+                    <button id="openCustomThemeModalBtn" class="icon-btn" title="Personalizar colores" aria-label="Personalizar colores">
+                        <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <button id="soundBtn" class="icon-btn sub" style="border:1px solid var(--line); padding:.45rem" title="Sonido de notificaciones" aria-label="Activar o silenciar sonido">
+                    <i data-lucide="volume-2" class="w-4 h-4"></i>
+                </button>
+
+                <div id="statusBadge" class="chip waiting" role="status" aria-live="polite">
+                    <span class="dot"></span><span id="statusText">Inicializando red…</span>
+                </div>
+
+                <button id="qrBtn" class="btn btn-ghost" style="padding:.5rem .6rem" title="Mostrar código QR de mi sala" aria-label="Mostrar código QR"><i data-lucide="qr-code" class="w-5 h-5"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <!-- ===== Contenido principal ===== -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 flex flex-col gap-4">
+
+        <!-- Menú -->
+        <nav class="card rounded-xl overflow-hidden" aria-label="Menú principal">
+            <div class="menu-tabs sub bb px-3 py-2.5" role="tablist">
+                <button class="btn menu-tab" role="tab" data-tab="chat"><i data-lucide="message-circle" class="w-4 h-4"></i><span>Chat</span></button>
+                <button class="btn menu-tab" role="tab" data-tab="rooms"><i data-lucide="door-open" class="w-4 h-4"></i><span>Salas</span></button>
+            </div>
+            <div class="p-4">
+                <!-- Chat: ID del otro usuario -->
+                <div data-panel="chat" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1.5">
+                        <label for="myIdInput" class="text-xs font-medium flex items-center justify-between">
+                            <span>Tu ID</span>
+                            <span id="myPeerStatus" class="text-[10px] muted">Conectando al servidor de señalización…</span>
+                        </label>
+                        <div class="flex gap-2">
+                            <input type="text" id="myIdInput" readonly class="field flex-1 px-3 py-2 text-xs font-mono select-all" placeholder="Generando…">
+                            <button id="editMyIdBtn" class="btn btn-ghost" title="Personalizar mi ID"><i data-lucide="edit-3" class="w-4 h-4"></i><span class="hidden sm:inline">Editar</span></button>
+                            <button id="copyMyIdBtn" class="btn btn-ghost" title="Copiar ID"><i data-lucide="copy" class="w-4 h-4"></i><span class="hidden sm:inline">Copiar</span></button>
+                        </div>
+                    </div>
+                    <form id="joinForm" class="flex flex-col gap-1.5">
+                        <label for="remoteIdInput" class="text-xs font-medium">ID del otro usuario</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="remoteIdInput" autocomplete="off" spellcheck="false" class="field flex-1 px-3 py-2 text-xs font-mono" placeholder="Pega aquí el ID del otro usuario…">
+                            <button id="connectBtn" type="submit" class="btn btn-primary px-4"><i data-lucide="message-circle" class="w-4 h-4"></i><span>Chatear</span></button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Salas: crear / unirse -->
+                <div data-panel="rooms" class="hidden">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <button id="createRoomBtn" type="button" class="btn btn-primary room-action">
+                            <span class="ico"><i data-lucide="plus-circle" class="w-5 h-5"></i></span>
+                            <span><strong>Crear sala</strong><small>Abre una sala nueva y compártela con enlace o QR</small></span>
+                        </button>
+                        <button id="joinRoomBtn" type="button" class="btn btn-ghost room-action">
+                            <span class="ico"><i data-lucide="log-in" class="w-5 h-5"></i></span>
+                            <span><strong>Unirse a sala</strong><small>Entra con el código o el enlace de una sala</small></span>
+                        </button>
+                    </div>
+                    <p id="roomInfo" class="mt-3 text-xs muted"></p>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Editor + columna lateral -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+            <!-- Editor -->
+            <section class="lg:col-span-2 card rounded-xl flex flex-col overflow-hidden shadow-sm min-h-[480px] lg:h-[680px]" aria-label="Editor colaborativo">
+                <div class="sub bb px-3 py-2 flex flex-wrap items-center justify-between gap-2 shrink-0">
+                    <div class="flex items-center gap-2 min-w-0">
+                        <i data-lucide="file-text" class="w-4 h-4 shrink-0" style="color: var(--color-primary)"></i>
+                        <span class="text-xs font-semibold">Editor</span>
+                        <span id="docTyping" class="text-[10px] italic hidden truncate" style="color: var(--warn)"></span>
+                        <span id="readonlyBadge" class="chip neutral hidden"><i data-lucide="lock" class="w-3 h-3"></i> Solo lectura</span>
+                    </div>
+                    <div class="flex items-center gap-0.5 flex-wrap">
+                        <button id="fontDownBtn" class="icon-btn" title="Reducir fuente" aria-label="Reducir fuente"><i data-lucide="a-arrow-down" class="w-4 h-4"></i></button>
+                        <button id="fontUpBtn" class="icon-btn" title="Aumentar fuente" aria-label="Aumentar fuente"><i data-lucide="a-arrow-up" class="w-4 h-4"></i></button>
+                        <button id="wrapBtn" class="icon-btn" title="Ajuste de línea" aria-label="Alternar ajuste de línea"><i data-lucide="wrap-text" class="w-4 h-4"></i></button>
+                        <span class="w-px h-4 mx-1" style="background: var(--line)"></span>
+                        <input type="file" id="importInput" accept=".txt,.md,.markdown,.csv,.json,.log,text/*" class="hidden">
+                        <button id="importBtn" class="icon-btn" title="Importar archivo de texto" aria-label="Importar archivo"><i data-lucide="upload" class="w-4 h-4"></i></button>
+                        <button id="copyDocBtn" class="icon-btn" title="Copiar texto" aria-label="Copiar texto"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        <button id="downloadTxtBtn" class="icon-btn" title="Descargar .txt" aria-label="Descargar como txt"><i data-lucide="download" class="w-4 h-4"></i></button>
+                        <button id="downloadMdBtn" class="icon-btn text-[10px] font-bold" title="Descargar .md" aria-label="Descargar como Markdown">MD</button>
+                        <button id="restoreBackupBtn" class="icon-btn hidden" title="Recuperar tu texto local anterior" aria-label="Recuperar copia local"><i data-lucide="history" class="w-4 h-4" style="color: var(--warn)"></i></button>
+                        <button id="clearEditorBtn" class="icon-btn danger" title="Vaciar editor" aria-label="Vaciar editor"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+
+                <div class="flex-1 p-3 flex flex-col min-h-0">
+                    <label for="documentEditor" class="sr-only">Documento</label>
+                    <textarea id="documentEditor" spellcheck="false"
+                        class="field w-full flex-1 min-h-[360px] p-4 text-sm leading-relaxed resize-none"
+                        placeholder="Escribe tu documento aquí. Se guarda en tu navegador y se sincroniza en tiempo real con quien se una a la sala…"></textarea>
+                </div>
+
+                <div class="sub bt px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] muted shrink-0">
+                    <div class="flex items-center gap-2">
+                        <span id="charCount">0 caracteres</span><span>•</span>
+                        <span id="wordCount">0 palabras</span><span>•</span>
+                        <span id="lineCount">1 línea</span><span>•</span>
+                        <span id="readTime">&lt; 1 min</span>
+                    </div>
+                    <span id="saveState" class="flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Guardado</span>
+                </div>
+            </section>
+
+            <!-- Columna lateral: sala + chat -->
+            <div class="flex flex-col gap-4 lg:h-[680px] min-h-0">
+
+                <!-- Sala -->
+                <section class="card rounded-xl shadow-sm shrink-0 overflow-hidden" aria-label="Sala">
+                    <div class="sub bb px-4 py-2 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="users" class="w-4 h-4" style="color: var(--color-primary)"></i>
+                            <span class="text-xs font-semibold">Sala</span>
+                            <span id="roleBadge" class="chip neutral">Solo tú</span>
+                        </div>
+                        <button id="leaveBtn" class="btn btn-ghost hidden" style="padding:.25rem .6rem"><i data-lucide="log-out" class="w-3.5 h-3.5"></i><span id="leaveLabel">Salir</span></button>
+                    </div>
+                    <ul id="rosterList" class="max-h-36 overflow-y-auto p-2 space-y-1 text-xs"></ul>
+                    <div id="hostSettings" class="bt px-4 py-2.5 space-y-2">
+                        <label class="switch"><span>Aprobar cada conexión nueva</span><input type="checkbox" id="optApprove"></label>
+                        <label class="switch"><span>Solo lectura para invitados</span><input type="checkbox" id="optReadonly"></label>
+                    </div>
+                </section>
+
+                <!-- Chat -->
+                <section class="card rounded-xl flex flex-col overflow-hidden shadow-sm flex-1 min-h-[420px] lg:min-h-0" aria-label="Chat">
+                    <div class="sub bb px-3 py-2 flex items-center justify-between shrink-0 gap-2">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="message-square" class="w-4 h-4" style="color: var(--ok)"></i>
+                            <span class="text-xs font-semibold">Chat P2P</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <label for="usernameInput" class="sr-only">Tu apodo</label>
+                            <input type="text" id="usernameInput" maxlength="24" class="field px-2 py-0.5 text-[11px] w-24" placeholder="Tu apodo" title="Cambiar tu apodo">
+                            <button id="clearChatBtn" class="icon-btn danger" title="Limpiar chat" aria-label="Limpiar chat"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                            <span id="chatPeerBadge" class="chip neutral" style="padding:.1rem .5rem;font-size:.62rem">Sin conexión</span>
+                        </div>
+                    </div>
+
+                    <div id="chatContainer" role="log" aria-live="polite" class="flex-1 min-h-0 p-3 overflow-y-auto space-y-3 flex flex-col">
+                        <div id="emptyChat" class="text-center my-auto text-xs muted py-6">
+                            <i data-lucide="messages-square" class="w-8 h-8 mx-auto mb-2 opacity-40"></i>
+                            <p>Conéctate a una sala para chatear.<br>Mensajes, enlaces e imágenes viajan directamente entre navegadores.</p>
+                        </div>
+                    </div>
+                    <div id="chatTyping" class="px-4 pb-1 text-[10px] italic h-4 muted"></div>
+
+                    <form id="chatForm" class="p-3 bt sub flex gap-2 items-end shrink-0">
+                        <input type="file" id="imageInput" accept="image/*" class="hidden">
+                        <button type="button" id="uploadImgBtn" class="btn btn-ghost" style="padding:.5rem" title="Enviar imagen o sticker (también puedes pegar o arrastrar)" aria-label="Enviar imagen" disabled><i data-lucide="image" class="w-4 h-4"></i></button>
+                        <label for="chatInput" class="sr-only">Mensaje</label>
+                        <textarea id="chatInput" rows="1" maxlength="5000" class="field flex-1 px-3 py-2 text-xs resize-none leading-normal max-h-24" placeholder="Conéctate para escribir…" disabled></textarea>
+                        <button type="submit" id="sendMsgBtn" class="btn btn-primary" style="padding:.5rem .8rem" aria-label="Enviar mensaje" disabled><i data-lucide="send" class="w-4 h-4"></i></button>
+                    </form>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <footer class="bt py-3 px-4 text-center text-xs muted mt-auto">
+        <p>P2P Workspace Pro • WebRTC + Yjs • Sin backend • Tus datos solo viven en los navegadores conectados</p>
+    </footer>
+
+    <!-- ===== Diálogo genérico ===== -->
+    <div id="dlg" class="hidden fixed inset-0 z-[60] backdrop flex items-center justify-center p-4">
+        <div class="card rounded-2xl p-5 max-w-sm w-full shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="dlgTitle">
+            <h3 id="dlgTitle" class="text-base font-bold mb-1"></h3>
+            <p id="dlgMsg" class="text-xs muted leading-relaxed mb-3"></p>
+            <input id="dlgInput" type="text" class="field hidden w-full px-3 py-2 text-xs font-mono" autocomplete="off" spellcheck="false">
+            <div class="flex justify-end gap-2 mt-4">
+                <button id="dlgCancel" class="btn btn-ghost">Cancelar</button>
+                <button id="dlgOk" class="btn btn-primary">Aceptar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Modal tema personalizado ===== -->
+    <div id="customThemeModal" class="hidden fixed inset-0 z-50 backdrop flex items-center justify-center p-4">
+        <div class="card rounded-2xl p-6 max-w-md w-full shadow-2xl relative" role="dialog" aria-modal="true" aria-labelledby="customThemeTitle">
+            <button id="closeCustomThemeBtn" class="icon-btn absolute top-4 right-4" aria-label="Cerrar"><i data-lucide="x" class="w-5 h-5"></i></button>
+            <h3 id="customThemeTitle" class="text-lg font-bold mb-1 flex items-center gap-2">
+                <i data-lucide="palette" class="w-5 h-5" style="color: var(--color-primary)"></i> Diseñador de tema
+            </h3>
+            <p class="text-[11px] muted mb-4">Vista previa en vivo. Se aplica al guardar.</p>
+            <div class="space-y-3 text-xs mb-6">
+                <div class="flex items-center justify-between"><label for="customBgMain" class="font-medium">Fondo principal</label><input type="color" id="customBgMain" class="w-10 h-8 rounded cursor-pointer bg-transparent border-0"></div>
+                <div class="flex items-center justify-between"><label for="customBgCard" class="font-medium">Fondo de paneles</label><input type="color" id="customBgCard" class="w-10 h-8 rounded cursor-pointer bg-transparent border-0"></div>
+                <div class="flex items-center justify-between"><label for="customBorder" class="font-medium">Bordes</label><input type="color" id="customBorder" class="w-10 h-8 rounded cursor-pointer bg-transparent border-0"></div>
+                <div class="flex items-center justify-between"><label for="customPrimary" class="font-medium">Color primario / acento</label><input type="color" id="customPrimary" class="w-10 h-8 rounded cursor-pointer bg-transparent border-0"></div>
+                <div class="flex items-center justify-between"><label for="customText" class="font-medium">Texto</label><input type="color" id="customText" class="w-10 h-8 rounded cursor-pointer bg-transparent border-0"></div>
+            </div>
+            <div class="flex gap-2">
+                <button id="applyCustomThemeBtn" class="btn btn-primary flex-1">Guardar y aplicar</button>
+                <button id="resetCustomThemeBtn" class="btn btn-ghost">Restablecer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== Modal QR ===== -->
+    <div id="qrModal" class="qr-overlay hidden" role="dialog" aria-modal="true" aria-label="Código QR de invitación">
+        <div class="qr-inner">
+            <div id="qrBig" class="qr-frame"></div>
+            <p id="qrCaption" class="qr-caption">Escanéalo para unirte a mi sala</p>
+            <div class="qr-actions flex flex-wrap justify-center gap-2">
+                <button id="copyInviteLinkBtn" class="btn btn-primary"><i data-lucide="link" class="w-3.5 h-3.5"></i><span>Copiar enlace</span></button>
+                <button id="shareBtn" class="btn btn-ghost hidden"><i data-lucide="share-2" class="w-3.5 h-3.5"></i><span>Compartir</span></button>
+                <button id="closeQrBtn" class="btn btn-ghost"><i data-lucide="x" class="w-3.5 h-3.5"></i><span>Cerrar</span></button>
+            </div>
+            <p id="fileWarning" class="hidden text-[11px] text-center max-w-md" style="color:#fde68a;text-shadow:0 1px 4px rgba(0,0,0,.6)">
+                ⚠️ Has abierto el archivo desde el disco (file://). Para que otras personas entren con el QR o el enlace, publícalo en un hosting estático. Pegar el ID a mano sí funciona.
+            </p>
+        </div>
+    </div>
+
+    <!-- ===== Visor de imágenes ===== -->
+    <div id="lightbox" class="hidden fixed inset-0 z-[70] backdrop flex items-center justify-center p-6 cursor-zoom-out">
+        <img id="lightboxImg" alt="Imagen ampliada" class="max-w-full max-h-full rounded-xl shadow-2xl bg-white/5">
+    </div>
+
+    <!-- ===== Toast ===== -->
+    <div id="toast" class="card fixed bottom-5 right-5 text-xs px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2 z-[80]" role="status" aria-live="polite">
+        <i id="toastIcon" data-lucide="info" class="w-4 h-4"></i><span id="toastMsg"></span>
+    </div>
+
+    <script type="module">
+    /* =====================================================================
+       P2P Workspace Pro
+       - Topología en estrella: el anfitrión acepta conexiones y retransmite.
+       - Texto sincronizado con Yjs (CRDT). Si Yjs no carga, se usa "último
+         que escribe gana" como alternativa.
+       ===================================================================== */
+
+    // ---------- Utilidades ----------
+    const $ = (id) => document.getElementById(id);
+    const store = {
+        get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : v; } catch { return d; } },
+        set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+        del(k) { try { localStorage.removeItem(k); } catch {} },
+    };
+    const icons = () => { try { window.lucide && window.lucide.createIcons(); } catch {} };
+    const setIcon = (btn, name) => { btn.innerHTML = `<i data-lucide="${name}" class="w-4 h-4"></i>`; icons(); };
+    const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36).slice(-4);
+    const cleanName = (s) => String(s ?? '').replace(/[\u0000-\u001f\u007f]/g, '').trim().slice(0, 24) || 'Anónimo';
+    const fmtTime = (ts) => new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const b64enc = (u8) => { let s = ''; const C = 0x8000; for (let i = 0; i < u8.length; i += C) s += String.fromCharCode.apply(null, u8.subarray(i, i + C)); return btoa(s); };
+    const b64dec = (b) => { const s = atob(b); const u = new Uint8Array(s.length); for (let i = 0; i < s.length; i++) u[i] = s.charCodeAt(i); return u; };
+    const isHigh = (c) => c >= 0xD800 && c <= 0xDBFF;
+    const isLow = (c) => c >= 0xDC00 && c <= 0xDFFF;
+    const hueOf = (str) => { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) >>> 0; return h % 360; };
+    const randomId = () => {
+        const a = 'abcdefghjkmnpqrstuvwxyz23456789'; const r = new Uint8Array(6); crypto.getRandomValues(r);
+        return 'sala-' + Array.from(r, (n) => a[n % a.length]).join('');
+    };
+    const IMG_RE = /^data:image\/(png|jpe?g|webp|gif);base64,[A-Za-z0-9+/=]+$/;
+    const MAX_PEERS = 8;
+
+    // ---------- Referencias DOM ----------
+    const themeSelect = $('themeSelect'), spongebobBadge = $('spongebobBadge');
+    const statusBadge = $('statusBadge'), statusText = $('statusText');
+    const myIdInput = $('myIdInput'), myPeerStatus = $('myPeerStatus'), remoteIdInput = $('remoteIdInput');
+    const editor = $('documentEditor');
+    const chatContainer = $('chatContainer'), chatInput = $('chatInput'), sendMsgBtn = $('sendMsgBtn');
+    const uploadImgBtn = $('uploadImgBtn'), imageInput = $('imageInput'), usernameInput = $('usernameInput');
+    const rosterList = $('rosterList'), roleBadge = $('roleBadge'), leaveBtn = $('leaveBtn'), leaveLabel = $('leaveLabel');
+    const optApprove = $('optApprove'), optReadonly = $('optReadonly');
+
+    // ---------- Toast ----------
+    let toastTimer = null;
+    function showToast(message, type = 'info') {
+        const icon = $('toastIcon');
+        $('toastMsg').textContent = message;
+        const map = { success: ['check-circle', 'var(--ok)'], error: ['alert-circle', 'var(--bad)'], info: ['info', 'var(--color-primary)'] };
+        const [name, color] = map[type] || map.info;
+        icon.setAttribute('data-lucide', name); icon.style.color = color; icons();
+        $('toast').classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => $('toast').classList.remove('show'), 3200);
+    }
+
+    // ---------- Diálogo genérico (sustituye prompt/confirm) ----------
+    const dlg = $('dlg'), dlgInput = $('dlgInput'), dlgOk = $('dlgOk'), dlgCancel = $('dlgCancel');
+    let dlgResolve = null, dlgHasInput = false;
+    function dialog(o) {
+        return new Promise((resolve) => {
+            if (dlgResolve) closeDlg(dlgHasInput ? null : false);
+            dlgResolve = resolve; dlgHasInput = typeof o.input === 'string';
+            $('dlgTitle').textContent = o.title || '';
+            $('dlgMsg').textContent = o.message || '';
+            dlgInput.classList.toggle('hidden', !dlgHasInput);
+            if (dlgHasInput) { dlgInput.value = o.input; dlgInput.placeholder = o.placeholder || ''; }
+            dlgOk.textContent = o.okText || 'Aceptar';
+            dlgOk.className = 'btn ' + (o.danger ? 'btn-danger' : 'btn-primary');
+            dlgCancel.textContent = o.cancelText || 'Cancelar';
+            dlgCancel.classList.toggle('hidden', !!o.hideCancel);
+            dlg.classList.remove('hidden');
+            (dlgHasInput ? dlgInput : dlgOk).focus();
+            if (dlgHasInput) dlgInput.select();
+        });
+    }
+    function closeDlg(val) { dlg.classList.add('hidden'); const r = dlgResolve; dlgResolve = null; if (r) r(val); }
+    dlgOk.addEventListener('click', () => closeDlg(dlgHasInput ? dlgInput.value : true));
+    dlgCancel.addEventListener('click', () => closeDlg(dlgHasInput ? null : false));
+    dlgInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); dlgOk.click(); } });
+
+    // ---------- Temas ----------
+    const THEMES = ['dark', 'light', 'spongebob', 'cyberpunk', 'forest', 'dracula', 'telegram', 'telegram-dark', 'frutiger', 'win7', 'classic', 'custom'];
+    const CUSTOM_DEFAULT = { bgMain: '#0f172a', bgCard: '#1e293b', border: '#334155', primary: '#6366f1', text: '#f8fafc' };
+    const customFields = { bgMain: $('customBgMain'), bgCard: $('customBgCard'), border: $('customBorder'), primary: $('customPrimary'), text: $('customText') };
+    const THEME_VARS = ['--bg-main', '--bg-card', '--border-color', '--color-primary', '--color-primary-hover', '--color-text', '--color-muted', '--on-primary', 'color-scheme'];
+
+    function lum(hex) {
+        const m = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex); if (!m) return 0;
+        const [r, g, b] = [1, 2, 3].map((i) => { const c = parseInt(m[i], 16) / 255; return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+    function readCustom() { try { return { ...CUSTOM_DEFAULT, ...JSON.parse(store.get('p2p_custom_theme_data') || '{}') }; } catch { return { ...CUSTOM_DEFAULT }; } }
+    function setCustomVars(c) {
+        const s = document.documentElement.style;
+        s.setProperty('--bg-main', c.bgMain); s.setProperty('--bg-card', c.bgCard); s.setProperty('--border-color', c.border);
+        s.setProperty('--color-primary', c.primary);
+        s.setProperty('--color-primary-hover', `color-mix(in srgb, ${c.primary} 85%, black)`);
+        s.setProperty('--color-text', c.text);
+        s.setProperty('--color-muted', `color-mix(in srgb, ${c.text} 62%, transparent)`);
+        s.setProperty('--on-primary', lum(c.primary) > 0.5 ? '#0b1020' : '#ffffff');
+        s.setProperty('color-scheme', lum(c.bgMain) > 0.5 ? 'light' : 'dark');
+        document.querySelector('meta[name="theme-color"]').setAttribute('content', c.bgMain);
+    }
+    function applyTheme(name) {
+        if (!THEMES.includes(name)) name = 'dark';
+        const root = document.documentElement;
+        THEME_VARS.forEach((p) => root.style.removeProperty(p));
+        root.dataset.theme = name;
+        if (name === 'custom') setCustomVars(readCustom());
+        else document.querySelector('meta[name="theme-color"]').setAttribute('content', getComputedStyle(root).getPropertyValue('--bg-main').trim() || '#0f172a');
+        spongebobBadge.classList.toggle('hidden', name !== 'spongebob');
+        themeSelect.value = name;
+        store.set('p2p_theme', name);
+    }
+    const savedThemeName = () => { const t = store.get('p2p_theme', 'dark'); return t === 'custom' && !store.get('p2p_custom_theme_data') ? 'dark' : t; };
+    function openCustomModal() {
+        const c = readCustom();
+        Object.keys(customFields).forEach((k) => (customFields[k].value = c[k]));
+        document.documentElement.dataset.theme = 'custom'; setCustomVars(c);
+        $('customThemeModal').classList.remove('hidden');
+    }
+    const collectCustom = () => Object.fromEntries(Object.entries(customFields).map(([k, el]) => [k, el.value]));
+    themeSelect.addEventListener('change', () => { if (themeSelect.value === 'custom') openCustomModal(); else applyTheme(themeSelect.value); });
+    $('openCustomThemeModalBtn').addEventListener('click', openCustomModal);
+    Object.values(customFields).forEach((el) => el.addEventListener('input', () => { document.documentElement.dataset.theme = 'custom'; setCustomVars(collectCustom()); }));
+    $('closeCustomThemeBtn').addEventListener('click', () => {
+        $('customThemeModal').classList.add('hidden');
+        const prev = savedThemeName();
+        applyTheme(prev);                                   // revierte la vista previa
+    });
+    $('applyCustomThemeBtn').addEventListener('click', () => {
+        store.set('p2p_custom_theme_data', JSON.stringify(collectCustom()));
+        applyTheme('custom'); $('customThemeModal').classList.add('hidden'); showToast('Tema personalizado guardado', 'success');
+    });
+    $('resetCustomThemeBtn').addEventListener('click', () => {
+        store.del('p2p_custom_theme_data'); applyTheme('dark'); $('customThemeModal').classList.add('hidden'); showToast('Tema restablecido a Dark Slate', 'info');
+    });
+
+    // ---------- Sonido ----------
+    let soundOn = store.get('p2p_sound', '1') === '1';
+    let audioCtx = null;
+    function refreshSoundIcon() { setIcon($('soundBtn'), soundOn ? 'volume-2' : 'volume-x'); }
+    $('soundBtn').addEventListener('click', () => { soundOn = !soundOn; store.set('p2p_sound', soundOn ? '1' : '0'); refreshSoundIcon(); showToast(soundOn ? 'Sonido activado' : 'Sonido silenciado'); });
+    function beep() {
+        if (!soundOn) return;
+        try {
+            audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator(), gain = audioCtx.createGain(), t = audioCtx.currentTime;
+            osc.type = 'sine'; osc.frequency.setValueAtTime(587.33, t);
+            gain.gain.setValueAtTime(0.08, t); gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+            osc.connect(gain); gain.connect(audioCtx.destination); osc.start(t); osc.stop(t + 0.2);
+        } catch {}
+    }
+
+    // ---------- No leídos en el título ----------
+    const baseTitle = document.title; let unread = 0;
+    function bumpUnread() { if (document.hidden || !document.hasFocus()) { unread++; document.title = `(${unread}) ${baseTitle}`; } }
+    function clearUnread() { unread = 0; document.title = baseTitle; }
+    window.addEventListener('focus', clearUnread);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) clearUnread(); });
+
+    // ---------- Estado de red ----------
+    const PEER_CFG = { debug: 1, config: { iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' } ] } };
+    let peer = null, myId = '';
+    let myName = cleanName(store.get('p2p_username') || `User_${Math.floor(1000 + Math.random() * 9000)}`);
+    let role = 'solo';                       // 'solo' | 'host' | 'guest'
+    const conns = new Map();                 // anfitrión: peerId -> { conn, name, ready, lastSeen }
+    let hostConn = null, pendingJoin = null, joinTimer = null, hostLastSeen = 0;
+    let lastHostId = null, manualLeave = false, rejoinAttempts = 0, autoJoinDone = false;
+    let guestRoster = [];                    // invitado: [{id,name}] recibido del anfitrión
+    let hostIdOfRoom = '';
+    const roomSettings = { readonly: false, approve: false };
+    let roomCreated = '';                    // código de la sala creada con «Crear sala»
+
+    const safeSend = (conn, msg) => { try { if (conn && conn.open) conn.send(msg); } catch (e) { console.warn('send', e); } };
+    function sendAll(msg, except = null) {
+        if (role === 'host') { for (const e of conns.values()) if (e.ready && e.conn !== except) safeSend(e.conn, msg); }
+        else if (role === 'guest' && hostConn) safeSend(hostConn, msg);
+    }
+
+    function updateStatus(state, text) { statusBadge.className = 'chip ' + state; statusText.textContent = text; }
+
+    function currentRoster() {
+        if (role === 'host') return [{ id: myId, name: myName, host: true }, ...[...conns.values()].filter((e) => e.ready).map((e) => ({ id: e.conn.peer, name: e.name }))];
+        if (role === 'guest') return guestRoster.map((p) => ({ ...p, host: p.id === hostIdOfRoom }));
+        return [{ id: myId, name: myName, host: false }];
+    }
+    function renderRoster() {
+        rosterList.textContent = '';
+        for (const p of currentRoster()) {
+            const li = document.createElement('li'); li.className = 'flex items-center gap-2 px-2 py-1 rounded-lg sub';
+            const av = document.createElement('span'); av.className = 'avatar'; av.style.background = `hsl(${hueOf(p.id || p.name)} 60% 42%)`; av.textContent = (p.name || '?').charAt(0).toUpperCase();
+            const nm = document.createElement('span'); nm.className = 'flex-1 truncate'; nm.textContent = p.name + (p.id === myId ? ' (tú)' : '');
+            li.append(av, nm);
+            if (p.host) { const t = document.createElement('span'); t.className = 'chip neutral'; t.style.cssText = 'padding:.05rem .45rem;font-size:.6rem'; t.textContent = 'anfitrión'; li.append(t); }
+            if (role === 'host' && p.id !== myId) {
+                const k = document.createElement('button'); k.className = 'icon-btn danger'; k.title = 'Expulsar'; k.setAttribute('aria-label', 'Expulsar a ' + p.name);
+                k.innerHTML = '<i data-lucide="user-x" class="w-3.5 h-3.5"></i>'; k.addEventListener('click', () => kick(p.id)); li.append(k);
+            }
+            rosterList.append(li);
+        }
+        icons();
+    }
+
+    function refreshUI() {
+        const n = currentRoster().length;
+        if (role === 'host') {
+            updateStatus('connected', `Anfitrión · ${n - 1} conectado${n - 1 === 1 ? '' : 's'}`);
+            roleBadge.className = 'chip connected'; roleBadge.textContent = 'Anfitrión';
+        } else if (role === 'guest') {
+            const h = guestRoster.find((p) => p.id === hostIdOfRoom);
+            updateStatus('connected', `En la sala de ${h ? h.name : 'anfitrión'}`);
+            roleBadge.className = 'chip connected'; roleBadge.textContent = 'Invitado';
+        } else if (pendingJoin) {
+            updateStatus('connecting', 'Conectando…'); roleBadge.className = 'chip connecting'; roleBadge.textContent = 'Conectando';
+        } else if (peer && !peer.destroyed && myId) {
+            updateStatus('waiting', 'Listo · esperando conexión'); roleBadge.className = 'chip neutral'; roleBadge.textContent = 'Solo tú';
+        }
+        const inRoom = role !== 'solo';
+        chatInput.disabled = !inRoom; sendMsgBtn.disabled = !inRoom; uploadImgBtn.disabled = !inRoom;
+        chatInput.placeholder = inRoom ? 'Escribe un mensaje…  (Enter envía, Shift+Enter = salto)' : 'Conéctate para escribir…';
+        const chatBadge = $('chatPeerBadge');
+        chatBadge.className = 'chip ' + (inRoom ? 'connected' : 'neutral'); chatBadge.style.cssText = 'padding:.1rem .5rem;font-size:.62rem';
+        chatBadge.textContent = inRoom ? `${n} en línea` : 'Sin conexión';
+        leaveBtn.classList.toggle('hidden', !inRoom);
+        leaveLabel.textContent = role === 'host' ? 'Cerrar sala' : 'Salir';
+        optApprove.checked = roomSettings.approve; optReadonly.checked = roomSettings.readonly;
+        optApprove.disabled = optReadonly.disabled = role === 'guest';
+        const ro = role === 'guest' && roomSettings.readonly;
+        editor.readOnly = ro; $('readonlyBadge').classList.toggle('hidden', !(roomSettings.readonly && role !== 'solo'));
+        const ri = $('roomInfo');
+        if (ri) {
+            if (role === 'host') ri.textContent = `Tu sala «${myId}» · ${n - 1} invitado${n - 1 === 1 ? '' : 's'} conectado${n - 1 === 1 ? '' : 's'}.`;
+            else if (role === 'guest') ri.textContent = `Estás en la sala «${hostIdOfRoom}».`;
+            else if (roomCreated && roomCreated === myId) ri.textContent = `Tu sala «${myId}» está abierta. Comparte el enlace o el QR para que entren.`;
+            else ri.textContent = 'No estás en ninguna sala.';
+        }
+        renderRoster();
+    }
+
+    // ---------- Documento: Yjs (CRDT) con alternativa ----------
+    let Y = null, ydoc = null, ytext = null, mirror = '';
+
+    async function loadYjs() {
+        try {
+            const timeout = new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 7000));
+            Y = await Promise.race([import('https://cdn.jsdelivr.net/npm/yjs@13.6.18/+esm'), timeout]);
+        } catch (e) { console.warn('Yjs no disponible, modo alternativo', e); Y = null; }
+    }
+    function bindDoc(initialText) {
+        if (ydoc) { try { ydoc.destroy(); } catch {} }
+        ydoc = new Y.Doc(); ytext = ydoc.getText('doc');
+        if (initialText) ytext.insert(0, initialText);
+        ydoc.on('update', onYUpdate);
+        ytext.observe(onYTextChange);
+        mirror = ytext.toString();
+    }
+    function onYUpdate(update, origin) {
+        scheduleSave();
+        if (origin === 'welcome') return;
+        const msg = { type: 'Y_UPDATE', u: b64enc(update) };
+        if (role === 'host') sendAll(msg, origin);
+        else if (role === 'guest' && origin === 'local') sendAll(msg);
+    }
+    function onYTextChange(event, tr) {
+        if (tr.origin === 'local') return;
+        let ss = editor.selectionStart, se = editor.selectionEnd, pos = 0;
+        const ins = (at, len) => { if (ss > at) ss += len; if (se > at) se += len; };
+        const del = (at, len) => { const f = (x) => (x <= at ? x : x >= at + len ? x - len : at); ss = f(ss); se = f(se); };
+        for (const op of event.delta) {
+            if (op.retain) pos += op.retain;
+            else if (typeof op.insert === 'string') { editor.setRangeText(op.insert, pos, pos, 'preserve'); ins(pos, op.insert.length); pos += op.insert.length; }
+            else if (op.delete) { editor.setRangeText('', pos, pos + op.delete, 'preserve'); del(pos, op.delete); }
+        }
+        const truth = ytext.toString();
+        if (editor.value !== truth) editor.value = truth;       // red de seguridad
+        mirror = truth;
+        if (document.activeElement === editor) editor.setSelectionRange(Math.min(ss, truth.length), Math.min(se, truth.length));
+        updateStats();
+    }
+    function applyLocalEdit() {
+        const next = editor.value;
+        if (next === mirror) return;
+        if (!Y) { mirror = next; sendAll({ type: 'TEXT_FULL', text: next }); scheduleSave(); return; }
+        const max = Math.min(mirror.length, next.length);
+        let p = 0; while (p < max && mirror.charCodeAt(p) === next.charCodeAt(p)) p++;
+        let s = 0; while (s < max - p && mirror.charCodeAt(mirror.length - 1 - s) === next.charCodeAt(next.length - 1 - s)) s++;
+        if (p > 0 && isHigh(mirror.charCodeAt(p - 1))) p--;
+        if (s > 0 && isLow(mirror.charCodeAt(mirror.length - s))) s--;
+        const del = mirror.length - p - s, insText = next.slice(p, next.length - s);
+        ydoc.transact(() => { if (del) ytext.delete(p, del); if (insText) ytext.insert(p, insText); }, 'local');
+        mirror = next;
+    }
+    function setEditorTextRaw(text) {            // solo modo alternativo
+        const ss = Math.min(editor.selectionStart, text.length), se = Math.min(editor.selectionEnd, text.length);
+        editor.value = text; mirror = text;
+        if (document.activeElement === editor) editor.setSelectionRange(ss, se);
+        updateStats(); scheduleSave();
+    }
+
+    // Estadísticas y guardado
+    function updateStats() {
+        const t = editor.value;
+        const words = t.trim() ? t.trim().split(/\s+/).length : 0;
+        const lines = t ? t.split('\n').length : 1;
+        $('charCount').textContent = `${t.length.toLocaleString()} caracteres`;
+        $('wordCount').textContent = `${words.toLocaleString()} palabras`;
+        $('lineCount').textContent = `${lines.toLocaleString()} línea${lines === 1 ? '' : 's'}`;
+        const mins = words / 200; $('readTime').textContent = mins < 1 ? '< 1 min' : `≈ ${Math.round(mins)} min`;
+    }
+    let saveTimer = null;
+    function setSaveState(saved) { $('saveState').innerHTML = saved ? '<i data-lucide="check" class="w-3 h-3"></i> Guardado' : '<i data-lucide="loader" class="w-3 h-3"></i> Guardando…'; icons(); }
+    function scheduleSave() {
+        setSaveState(false); clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => { store.set('p2p_local_doc', editor.value); setSaveState(true); }, 400);
+    }
+    function refreshBackupBtn() { $('restoreBackupBtn').classList.toggle('hidden', !store.get('p2p_backup_doc')); }
+
+    // ---------- Indicadores de escritura ----------
+    const typers = { doc: new Map(), chat: new Map() };
+    function setTyper(scope, name, on) {
+        const m = typers[scope]; clearTimeout(m.get(name)); m.delete(name);
+        if (on) m.set(name, setTimeout(() => { m.delete(name); renderTyping(); }, 2800));
+        renderTyping();
+    }
+    function renderTyping() {
+        const d = [...typers.doc.keys()], c = [...typers.chat.keys()];
+        const el = $('docTyping'); el.classList.toggle('hidden', !d.length); el.textContent = d.length ? `${d.join(', ')} escribiendo…` : '';
+        $('chatTyping').textContent = c.length ? `${c.join(', ')} escribiendo…` : '';
+    }
+    const localTyping = { doc: { on: false, t: null }, chat: { on: false, t: null } };
+    function signalTyping(scope) {
+        if (role === 'solo') return;
+        const s = localTyping[scope];
+        if (!s.on) { s.on = true; sendAll({ type: 'TYPING', scope, on: true, from: myId, name: myName }); }
+        clearTimeout(s.t);
+        s.t = setTimeout(() => { s.on = false; sendAll({ type: 'TYPING', scope, on: false, from: myId, name: myName }); }, 1500);
+    }
+
+    // ---------- Chat ----------
+    const seenMsgs = new Set();
+    function linkNodes(text) {
+        const frag = document.createDocumentFragment(); const re = /https?:\/\/[^\s<>"']+/g; let last = 0, m;
+        while ((m = re.exec(text))) {
+            const url = m[0].replace(/[.,;:!?)\]]+$/, '');
+            frag.append(text.slice(last, m.index));
+            const a = document.createElement('a'); a.href = url; a.textContent = url; a.target = '_blank'; a.rel = 'noopener noreferrer nofollow';
+            frag.append(a); last = m.index + url.length; re.lastIndex = last;
+        }
+        frag.append(text.slice(last)); return frag;
+    }
+    function renderMsg(m) {
+        const empty = $('emptyChat'); if (empty && empty.parentNode) empty.remove();
+        if (m.system) {
+            const d = document.createElement('div'); d.className = 'text-center text-[10px] muted py-0.5'; d.textContent = m.text;
+            chatContainer.append(d);
+        } else {
+            const wrap = document.createElement('div'); wrap.className = `flex flex-col ${m.mine ? 'items-end' : 'items-start'} gap-1`;
+            const head = document.createElement('div'); head.className = 'flex items-center gap-1.5 px-1';
+            const nm = document.createElement('span'); nm.className = 'text-[10px] font-semibold'; nm.style.color = m.mine ? 'var(--color-primary)' : `hsl(${hueOf(m.from || m.name)} 70% 62%)`; nm.textContent = m.name;
+            const tm = document.createElement('span'); tm.className = 'text-[9px] muted'; tm.textContent = fmtTime(m.ts);
+            head.append(nm, tm); wrap.append(head);
+            if (m.img) {
+                const img = document.createElement('img'); img.className = 'chat-img'; img.alt = 'Imagen de ' + m.name; img.src = m.img; img.loading = 'lazy';
+                img.addEventListener('click', () => { $('lightboxImg').src = m.img; $('lightbox').classList.remove('hidden'); });
+                wrap.append(img);
+            } else {
+                const b = document.createElement('div'); b.className = 'bubble ' + (m.mine ? 'me' : 'them'); b.append(linkNodes(m.text)); wrap.append(b);
+            }
+            chatContainer.append(wrap);
+        }
+        while (chatContainer.children.length > 300) chatContainer.firstChild.remove();
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+    }
+    const sysMsg = (text) => renderMsg({ system: true, text });
+    function showIncoming(m) {
+        if (seenMsgs.has(m.id)) return; seenMsgs.add(m.id); if (seenMsgs.size > 500) seenMsgs.delete(seenMsgs.values().next().value);
+        renderMsg({ ...m, mine: false }); beep(); bumpUnread();
+    }
+    function validChat(d) {
+        if (d.type === 'CHAT') return typeof d.text === 'string' && d.text.length > 0 && d.text.length <= 5000;
+        if (d.type === 'IMG') return typeof d.img === 'string' && d.img.length < 2_500_000 && IMG_RE.test(d.img);
+        return false;
+    }
+    function sendChat(payload) {
+        if (role === 'solo') return;
+        const msg = { ...payload, id: uid(), from: myId, name: myName, ts: Date.now() };
+        seenMsgs.add(msg.id);
+        renderMsg({ ...msg, mine: true });
+        sendAll(msg);
+    }
+    $('chatForm').addEventListener('submit', (e) => {
+        e.preventDefault(); const text = chatInput.value.trim(); if (!text || role === 'solo') return;
+        sendChat({ type: 'CHAT', text }); chatInput.value = ''; chatInput.style.height = 'auto';
+        localTyping.chat.on = false; clearTimeout(localTyping.chat.t); sendAll({ type: 'TYPING', scope: 'chat', on: false, from: myId, name: myName });
+    });
+    chatInput.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('chatForm').requestSubmit(); } });
+    chatInput.addEventListener('input', () => { chatInput.style.height = 'auto'; chatInput.style.height = Math.min(chatInput.scrollHeight, 96) + 'px'; if (chatInput.value) signalTyping('chat'); });
+    $('clearChatBtn').addEventListener('click', async () => {
+        if (!(await dialog({ title: 'Limpiar chat', message: 'Se borrará el historial solo en tu pantalla.', okText: 'Limpiar', danger: true }))) return;
+        chatContainer.textContent = '';
+        const empty = document.createElement('div'); empty.id = 'emptyChat'; empty.className = 'text-center my-auto text-xs muted py-6';
+        empty.innerHTML = '<i data-lucide="messages-square" class="w-8 h-8 mx-auto mb-2 opacity-40"></i><p>Chat vacío.</p>';
+        chatContainer.append(empty); icons(); showToast('Chat limpio', 'success');
+    });
+
+    // Imágenes / stickers
+    function loadImage(file) {
+        return new Promise((res, rej) => { const url = URL.createObjectURL(file); const img = new Image(); img.onload = () => { URL.revokeObjectURL(url); res(img); }; img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('No se pudo leer la imagen')); }; img.src = url; });
+    }
+    async function fileToSticker(file) {
+        if (!file.type.startsWith('image/')) throw new Error('El archivo no es una imagen');
+        if (file.size > 15 * 1024 * 1024) throw new Error('Imagen demasiado grande (máx. 15 MB)');
+        const img = await loadImage(file);
+        let max = 512;
+        for (let i = 0; i < 4; i++) {
+            const k = Math.min(1, max / Math.max(img.width, img.height));
+            const w = Math.max(1, Math.round(img.width * k)), h = Math.max(1, Math.round(img.height * k));
+            const c = document.createElement('canvas'); c.width = w; c.height = h;
+            c.getContext('2d').drawImage(img, 0, 0, w, h);
+            let uri = c.toDataURL('image/webp', 0.88);
+            if (!uri.startsWith('data:image/webp')) uri = c.toDataURL('image/png');
+            if (uri.length < 1_200_000) return uri;
+            max = Math.round(max * 0.7);
+        }
+        throw new Error('No se pudo reducir la imagen lo suficiente');
+    }
+    async function sendImageFile(file) {
+        if (role === 'solo') return showToast('Conéctate a una sala primero', 'info');
+        try { sendChat({ type: 'IMG', img: await fileToSticker(file) }); } catch (e) { showToast(e.message, 'error'); }
+    }
+    uploadImgBtn.addEventListener('click', () => imageInput.click());
+    imageInput.addEventListener('change', () => { const f = imageInput.files[0]; imageInput.value = ''; if (f) sendImageFile(f); });
+    chatInput.addEventListener('paste', (e) => {
+        const item = [...(e.clipboardData?.items || [])].find((i) => i.type.startsWith('image/'));
+        if (item) { e.preventDefault(); const f = item.getAsFile(); if (f) sendImageFile(f); }
+    });
+    const chatSection = chatContainer.closest('section');
+    ['dragenter', 'dragover'].forEach((ev) => chatSection.addEventListener(ev, (e) => { if (e.dataTransfer?.types?.includes('Files')) { e.preventDefault(); chatSection.classList.add('drop-active'); } }));
+    ['dragleave', 'drop'].forEach((ev) => chatSection.addEventListener(ev, () => chatSection.classList.remove('drop-active')));
+    chatSection.addEventListener('drop', (e) => { e.preventDefault(); const f = [...(e.dataTransfer?.files || [])].find((x) => x.type.startsWith('image/')); if (f) sendImageFile(f); });
+    $('lightbox').addEventListener('click', () => $('lightbox').classList.add('hidden'));
+
+    // ---------- Red: PeerJS ----------
+    function initPeer(requestedId) {
+        teardownRoom(true);
+        if (peer) { try { peer.destroy(); } catch {} peer = null; }
+        myId = ''; myIdInput.value = 'Conectando…'; myPeerStatus.textContent = 'Conectando al servidor de señalización…';
+        updateStatus('connecting', 'Iniciando red…');
+        createPeer(requestedId || store.get('p2p_custom_id') || randomId());
+    }
+    function createPeer(id) {
+        const p = new Peer(id, PEER_CFG); peer = p; let reconnectTries = 0;
+        p.on('open', (openId) => {
+            if (p !== peer) return;
+            myId = openId; myIdInput.value = openId; myPeerStatus.textContent = 'Listo'; reconnectTries = 0;
+            generateQR(); refreshUI();
+            if (roomCreated && roomCreated === openId) showToast(`Sala «${openId}» creada. Comparte el enlace o el QR.`, 'success');
+            const room = new URLSearchParams(location.search).get('room');
+            if (room && room !== openId && !autoJoinDone && role === 'solo') { autoJoinDone = true; remoteIdInput.value = room; setTimeout(() => joinRoom(room), 400); }
+        });
+        p.on('connection', (conn) => { if (p === peer) onIncoming(conn); });
+        p.on('disconnected', () => {
+            if (p !== peer || p.destroyed) return;
+            myPeerStatus.textContent = 'Reconectando con el servidor…';
+            const delay = Math.min(1500 * ++reconnectTries, 10000);
+            setTimeout(() => { if (p === peer && !p.destroyed && p.disconnected) { try { p.reconnect(); } catch {} } }, delay);
+        });
+        p.on('error', (err) => {
+            if (p !== peer) return; console.error('PeerJS', err);
+            switch (err.type) {
+                case 'unavailable-id':
+                    showToast('Ese ID ya está en uso (¿otra pestaña?). Uso uno aleatorio temporal.', 'error');
+                    peer = null; try { p.destroy(); } catch {} createPeer(randomId()); return;
+                case 'peer-unavailable':
+                    cancelPendingJoin(); showToast('No se encontró esa sala. Revisa el ID o pide al anfitrión que la abra.', 'error'); break;
+                case 'network': case 'server-error': case 'socket-error': case 'socket-closed':
+                    myPeerStatus.textContent = 'Problema con el servidor de señalización'; showToast('Problema de red con el servidor de señalización.', 'error'); break;
+                case 'webrtc': showToast('Error WebRTC: la red puede bloquear conexiones P2P.', 'error'); break;
+                case 'invalid-id': showToast('ID no válido: usa letras, números, guiones.', 'error'); break;
+                default: showToast('Error P2P: ' + (err.message || err.type), 'error');
+            }
+            if (!myId) updateStatus('disconnected', 'Error de red'); else refreshUI();
+        });
+    }
+
+    const qrModal = $('qrModal');
+    const qrOpen = () => !qrModal.classList.contains('hidden');
+    function renderBigQR() {
+        const el = $('qrBig'); el.textContent = '';
+        if (!myId) return;
+        try { new QRCode(el, { text: inviteUrl(), width: 512, height: 512, colorDark: '#000000', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M }); } catch {}
+        $('qrCaption').textContent = `Escanéalo para unirte a «${myId}»`;
+    }
+    function generateQR() { if (qrOpen()) renderBigQR(); }
+    function openQr() {
+        if (!myId) return showToast('Aún se está iniciando la red. Espera un momento.', 'info');
+        renderBigQR(); qrModal.classList.remove('hidden'); $('closeQrBtn').focus();
+    }
+    function closeQr() { qrModal.classList.add('hidden'); }
+    function inviteUrl() { const u = new URL(location.href); u.search = ''; u.hash = ''; u.searchParams.set('room', myId); return u.toString(); }
+    async function copyText(text) {
+        try { await navigator.clipboard.writeText(text); return true; }
+        catch { const t = document.createElement('textarea'); t.value = text; t.style.position = 'fixed'; t.style.opacity = '0'; document.body.append(t); t.select(); let ok = false; try { ok = document.execCommand('copy'); } catch {} t.remove(); return ok; }
+    }
+    async function copyWithToast(text, okMsg) { const ok = await copyText(text); showToast(ok ? okMsg : 'No se pudo copiar', ok ? 'success' : 'error'); }
+
+    // ----- Anfitrión: conexiones entrantes -----
+    function onIncoming(conn) {
+        if (role === 'guest' || pendingJoin) {
+            conn.on('open', () => { safeSend(conn, { type: 'REJECT', reason: 'busy' }); setTimeout(() => conn.close(), 400); });
+            return;
+        }
+        const old = conns.get(conn.peer);
+        if (old) { conns.delete(conn.peer); try { old.conn.close(); } catch {} }
+        const entry = { conn, name: '', ready: false, helloSeen: false, lastSeen: Date.now() };
+        conns.set(conn.peer, entry);
+        const hs = setTimeout(() => { if (!entry.ready) { try { conn.close(); } catch {} } }, 12000);
+        conn.on('data', (d) => hostOnData(entry, d));
+        conn.on('close', () => { clearTimeout(hs); hostOnClosed(entry); });
+        conn.on('error', (e) => console.warn('conn error', e));
+    }
+    async function hostOnData(entry, d) {
+        entry.lastSeen = Date.now();
+        if (!d || typeof d !== 'object' || typeof d.type !== 'string') return;
+        if (d.type === 'PING') return;
+        if (d.type === 'HELLO') {
+            if (entry.helloSeen) return; entry.helloSeen = true;
+            const name = cleanName(d.name);
+            if ([...conns.values()].filter((e) => e.ready).length >= MAX_PEERS) { safeSend(entry.conn, { type: 'REJECT', reason: 'full' }); setTimeout(() => entry.conn.close(), 300); return; }
+            if (roomSettings.approve) {
+                beep();
+                const ok = await dialog({ title: 'Solicitud de conexión', message: `«${name}» quiere unirse a tu sala.`, okText: 'Permitir', cancelText: 'Rechazar' });
+                if (!ok || conns.get(entry.conn.peer) !== entry || !entry.conn.open) { safeSend(entry.conn, { type: 'REJECT', reason: 'denied' }); setTimeout(() => entry.conn.close(), 300); return; }
+            }
+            acceptGuest(entry, name); return;
+        }
+        if (!entry.ready) return;
+        const from = entry.conn.peer;
+        switch (d.type) {
+            case 'RENAME': entry.name = cleanName(d.name); broadcastRoster(); refreshUI(); break;
+            case 'Y_UPDATE':
+                if (roomSettings.readonly || !Y || typeof d.u !== 'string') return;
+                try { Y.applyUpdate(ydoc, b64dec(d.u), entry.conn); } catch (e) { console.warn('update inválido', e); }
+                break;
+            case 'TEXT_FULL':
+                if (roomSettings.readonly || Y || typeof d.text !== 'string' || d.text.length > 2_000_000) return;
+                setEditorTextRaw(d.text); sendAll({ type: 'TEXT_FULL', text: d.text }, entry.conn); break;
+            case 'CHAT': case 'IMG': {
+                if (!validChat(d)) return;
+                const clean = { type: d.type, id: String(d.id || uid()).slice(0, 24), from, name: entry.name, ts: Date.now(), ...(d.type === 'CHAT' ? { text: d.text } : { img: d.img }) };
+                showIncoming(clean); sendAll(clean, entry.conn); break;
+            }
+            case 'TYPING': {
+                const scope = d.scope === 'chat' ? 'chat' : 'doc';
+                setTyper(scope, entry.name, !!d.on); sendAll({ type: 'TYPING', scope, on: !!d.on, from, name: entry.name }, entry.conn); break;
+            }
+        }
+    }
+    function acceptGuest(entry, name) {
+        entry.name = name; entry.ready = true; role = 'host';
+        const welcome = { type: 'WELCOME', hostId: myId, hostName: myName, settings: { ...roomSettings }, peers: currentRoster().map(({ id, name: n }) => ({ id, name: n })) };
+        if (Y) welcome.u = b64enc(Y.encodeStateAsUpdate(ydoc)); else welcome.text = editor.value;
+        safeSend(entry.conn, welcome);
+        sysMsg(`${name} se unió a la sala`); beep();
+        broadcastRoster(); refreshUI(); showToast(`${name} se ha conectado`, 'success');
+    }
+    function broadcastRoster() { sendAll({ type: 'PEERS', hostId: myId, peers: currentRoster().map(({ id, name }) => ({ id, name })) }); }
+    function hostOnClosed(entry) {
+        const id = entry.conn.peer; if (conns.get(id) !== entry) return;
+        conns.delete(id); setTyper('doc', entry.name, false); setTyper('chat', entry.name, false);
+        if (entry.ready) { sysMsg(`${entry.name} salió de la sala`); broadcastRoster(); }
+        if (![...conns.values()].some((e) => e.ready)) role = 'solo';
+        refreshUI();
+    }
+    function kick(id) {
+        const e = conns.get(id); if (!e) return;
+        safeSend(e.conn, { type: 'KICK' }); showToast(`${e.name} fue expulsado`, 'info');
+        setTimeout(() => { try { e.conn.close(); } catch {} hostOnClosed(e); }, 150);
+    }
+
+    // ----- Invitado: unirse a una sala -----
+    async function joinRoom(rawId) {
+        const remoteId = extractRoomId(rawId);
+        if (!remoteId) return showToast('Introduce un ID válido', 'error');
+        if (!peer || peer.destroyed || !myId) return showToast('Aún se está iniciando la red. Espera un momento.', 'info');
+        if (remoteId === myId) return showToast('No puedes conectarte a ti mismo', 'error');
+        if (pendingJoin) return showToast('Ya hay una conexión en curso', 'info');
+        if (role === 'host' && [...conns.values()].some((e) => e.ready)) {
+            if (!(await dialog({ title: '¿Dejar tu sala?', message: 'Tienes invitados conectados. Si te unes a otra sala, se desconectarán.', okText: 'Unirme', danger: true }))) return;
+        } else if (role === 'guest') {
+            if (!(await dialog({ title: '¿Cambiar de sala?', message: 'Saldrás de la sala actual.', okText: 'Cambiar' }))) return;
+        }
+        teardownRoom(true); manualLeave = false;
+        const conn = peer.connect(remoteId, { reliable: true });
+        pendingJoin = conn; refreshUI();
+        conn.on('open', () => safeSend(conn, { type: 'HELLO', name: myName }));
+        conn.on('data', (d) => guestOnData(conn, d));
+        conn.on('close', () => guestOnClosed(conn));
+        conn.on('error', (e) => console.warn('conn error', e));
+        clearTimeout(joinTimer);
+        joinTimer = setTimeout(() => { if (pendingJoin === conn) { cancelPendingJoin(); showToast('No se pudo conectar (¿esperando aprobación o red bloqueada?)', 'error'); } }, 60000);
+    }
+    function cancelPendingJoin() { clearTimeout(joinTimer); const c = pendingJoin; pendingJoin = null; if (c) { try { c.close(); } catch {} } refreshUI(); }
+
+    function guestOnData(conn, d) {
+        if (!d || typeof d !== 'object' || typeof d.type !== 'string') return;
+        if (conn !== hostConn && conn !== pendingJoin) return;
+        hostLastSeen = Date.now();
+        switch (d.type) {
+            case 'WELCOME': if (conn === pendingJoin) onWelcome(conn, d); break;
+            case 'REJECT': {
+                const msgs = { busy: 'Ese usuario ya está en otra sala.', full: 'La sala está llena.', denied: 'El anfitrión rechazó tu conexión.' };
+                lastHostId = null; showToast(msgs[d.reason] || 'Conexión rechazada.', 'error'); cancelPendingJoin(); break;
+            }
+            case 'KICK': lastHostId = null; manualLeave = true; showToast('Has sido expulsado de la sala.', 'error'); break;
+            case 'BYE': lastHostId = null; manualLeave = true; break;
+            case 'PEERS': if (conn === hostConn && Array.isArray(d.peers)) { hostIdOfRoom = String(d.hostId || hostIdOfRoom); guestRoster = d.peers.slice(0, 20).map((p) => ({ id: String(p.id).slice(0, 64), name: cleanName(p.name) })); refreshUI(); } break;
+            case 'SETTINGS': if (conn === hostConn && d.settings) { roomSettings.readonly = !!d.settings.readonly; roomSettings.approve = !!d.settings.approve; refreshUI(); } break;
+            case 'Y_UPDATE': if (conn === hostConn && Y && typeof d.u === 'string') { try { Y.applyUpdate(ydoc, b64dec(d.u), conn); } catch (e) { console.warn(e); } } break;
+            case 'TEXT_FULL': if (conn === hostConn && !Y && typeof d.text === 'string' && d.text.length <= 2_000_000) setEditorTextRaw(d.text); break;
+            case 'CHAT': case 'IMG': if (conn === hostConn && validChat(d)) showIncoming({ type: d.type, id: String(d.id || uid()).slice(0, 24), from: String(d.from || '').slice(0, 64), name: cleanName(d.name), ts: Number(d.ts) || Date.now(), text: d.text, img: d.img }); break;
+            case 'TYPING': if (conn === hostConn) setTyper(d.scope === 'chat' ? 'chat' : 'doc', cleanName(d.name), !!d.on); break;
+        }
+    }
+    function onWelcome(conn, d) {
+        clearTimeout(joinTimer); pendingJoin = null; hostConn = conn; hostLastSeen = Date.now();
+        role = 'guest'; lastHostId = conn.peer; rejoinAttempts = 0; hostIdOfRoom = String(d.hostId || conn.peer);
+        roomSettings.readonly = !!d.settings?.readonly; roomSettings.approve = !!d.settings?.approve;
+        guestRoster = Array.isArray(d.peers) ? d.peers.map((p) => ({ id: String(p.id), name: cleanName(p.name) })) : [{ id: hostIdOfRoom, name: cleanName(d.hostName) }];
+        if (!guestRoster.some((p) => p.id === myId)) guestRoster.push({ id: myId, name: myName });
+        const prev = editor.value;
+        if (Y && typeof d.u === 'string') { editor.value = ''; bindDoc(''); mirror = ''; try { Y.applyUpdate(ydoc, b64dec(d.u), 'welcome'); } catch (e) { console.warn(e); } const truth = ytext.toString(); editor.value = truth; mirror = truth; }
+        else if (typeof d.text === 'string') { editor.value = d.text; mirror = d.text; }
+        if (prev.trim() && prev !== editor.value) { store.set('p2p_backup_doc', prev); refreshBackupBtn(); showToast('Documento de la sala cargado. Tu texto anterior se guardó como copia (icono ⟲).', 'info'); }
+        else showToast('Conectado y sincronizado', 'success');
+        updateStats(); scheduleSave(); sysMsg('Te has unido a la sala'); refreshUI();
+    }
+    function guestOnClosed(conn) {
+        if (conn !== hostConn && conn !== pendingJoin) return;
+        const wasJoined = conn === hostConn;
+        if (pendingJoin === conn) { clearTimeout(joinTimer); pendingJoin = null; }
+        hostConn = null; role = 'solo'; guestRoster = []; hostIdOfRoom = ''; roomSettings.readonly = false; roomSettings.approve = false;
+        typers.doc.clear(); typers.chat.clear(); renderTyping();
+        if (wasJoined) {
+            sysMsg('Desconectado de la sala');
+            if (!manualLeave && lastHostId && rejoinAttempts < 3) {
+                const attempt = ++rejoinAttempts, target = lastHostId;
+                showToast(`Conexión perdida. Reintentando (${attempt}/3)…`, 'error');
+                setTimeout(() => { if (role === 'solo' && !pendingJoin && peer && !peer.destroyed) joinRoom(target); }, 1500 * attempt);
+            } else showToast('Desconectado de la sala', 'info');
+        }
+        refreshUI();
+    }
+    function teardownRoom(silent) {
+        manualLeave = true;
+        if (pendingJoin) { clearTimeout(joinTimer); try { pendingJoin.close(); } catch {} pendingJoin = null; }
+        if (hostConn) { const c = hostConn; hostConn = null; try { c.close(); } catch {} }
+        for (const e of [...conns.values()]) { safeSend(e.conn, { type: 'BYE' }); const c = e.conn; setTimeout(() => { try { c.close(); } catch {} }, 120); }
+        conns.clear(); role = 'solo'; guestRoster = []; hostIdOfRoom = '';
+        roomSettings.readonly = false; roomSettings.approve = false; lastHostId = null;
+        if (!silent) refreshUI();
+    }
+    leaveBtn.addEventListener('click', async () => {
+        const wasHost = role === 'host';
+        if (wasHost && !(await dialog({ title: 'Cerrar sala', message: 'Se desconectará a todos los invitados.', okText: 'Cerrar sala', danger: true }))) return;
+        teardownRoom(false); sysMsg('Saliste de la sala'); showToast(wasHost ? 'Sala cerrada' : 'Has salido de la sala', 'info');
+    });
+
+    // Ajustes de sala (solo anfitrión)
+    function pushSettings() { roomSettings.approve = optApprove.checked; roomSettings.readonly = optReadonly.checked; sendAll({ type: 'SETTINGS', settings: { ...roomSettings } }); refreshUI(); }
+    optApprove.addEventListener('change', pushSettings);
+    optReadonly.addEventListener('change', pushSettings);
+
+    // Latido: detecta caídas silenciosas
+    setInterval(() => {
+        const ping = { type: 'PING' }, now = Date.now();
+        if (role === 'host') {
+            for (const e of [...conns.values()]) {
+                safeSend(e.conn, ping);
+                if (now - e.lastSeen > 30000) { try { e.conn.close(); } catch {} hostOnClosed(e); }
+            }
+        } else if (role === 'guest' && hostConn) {
+            safeSend(hostConn, ping);
+            if (now - hostLastSeen > 30000) { const c = hostConn; try { c.close(); } catch {} guestOnClosed(c); }
+        }
+    }, 8000);
+
+    // ---------- Controles de la barra de conexión ----------
+    $('joinForm').addEventListener('submit', (e) => { e.preventDefault(); joinRoom(remoteIdInput.value); });
+    $('copyMyIdBtn').addEventListener('click', () => { if (myId) copyWithToast(myId, '¡ID copiado!'); });
+    $('copyInviteLinkBtn').addEventListener('click', () => { if (myId) copyWithToast(inviteUrl(), '¡Enlace de invitación copiado!'); });
+    if (navigator.share) { $('shareBtn').classList.remove('hidden'); $('shareBtn').addEventListener('click', () => { if (myId) navigator.share({ title: 'P2P Workspace Pro', text: 'Únete a mi sala', url: inviteUrl() }).catch(() => {}); }); }
+    $('editMyIdBtn').addEventListener('click', async () => {
+        const v = await dialog({ title: 'Personalizar mi ID', message: 'Solo letras, números, guiones y guiones bajos (mín. 3). Déjalo vacío para uno aleatorio. Un ID corto es fácil de adivinar: considera activar «Aprobar conexiones».', input: store.get('p2p_custom_id') || '', placeholder: 'mi-sala-privada' });
+        if (v === null) return;
+        const id = v.trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9_-]/g, '').replace(/[-_]{2,}/g, '-').replace(/^[-_]+|[-_]+$/g, '').slice(0, 40);
+        if (id && id.length < 3) return showToast('El ID debe tener al menos 3 caracteres', 'error');
+        if (role !== 'solo' && !(await dialog({ title: 'Cambiar ID', message: 'Esto cerrará tu conexión actual.', okText: 'Continuar', danger: true }))) return;
+        if (id) store.set('p2p_custom_id', id); else store.del('p2p_custom_id');
+        initPeer(id || null); showToast('Actualizando ID…', 'info');
+    });
+    usernameInput.addEventListener('change', () => {
+        myName = cleanName(usernameInput.value); usernameInput.value = myName; store.set('p2p_username', myName);
+        if (role === 'guest') { sendAll({ type: 'RENAME', name: myName }); guestRoster = guestRoster.map((p) => (p.id === myId ? { ...p, name: myName } : p)); }
+        else if (role === 'host') broadcastRoster();
+        refreshUI(); showToast(`Nombre guardado como: ${myName}`, 'info');
+    });
+
+    // ---------- Código QR (modal 512x512 con fondo desenfocado) ----------
+    $('qrBtn').addEventListener('click', openQr);
+    $('closeQrBtn').addEventListener('click', closeQr);
+    qrModal.addEventListener('click', (e) => { if (!e.target.closest('#qrBig, .qr-actions, #qrCaption, #fileWarning')) closeQr(); });
+    if (location.protocol === 'file:') $('fileWarning').classList.remove('hidden');
+
+    // ---------- Menú: Chat / Salas ----------
+    const sanitizeId = (v) => String(v || '').trim().replace(/\s+/g, '-').replace(/[^A-Za-z0-9_-]/g, '').replace(/[-_]{2,}/g, '-').replace(/^[-_]+|[-_]+$/g, '').slice(0, 40);
+    function extractRoomId(v) {
+        const t = String(v || '').trim();
+        try { const r = new URL(t).searchParams.get('room'); if (r) return r.trim(); } catch {}
+        return t;
+    }
+    function setTab(name) {
+        if (!['chat', 'rooms'].includes(name)) name = 'chat';
+        document.querySelectorAll('.menu-tab').forEach((b) => { const on = b.dataset.tab === name; b.classList.toggle('active', on); b.setAttribute('aria-selected', String(on)); });
+        document.querySelectorAll('[data-panel]').forEach((p) => p.classList.toggle('hidden', p.dataset.panel !== name));
+        store.set('p2p_tab', name);
+    }
+    document.querySelectorAll('.menu-tab').forEach((b) => b.addEventListener('click', () => setTab(b.dataset.tab)));
+    setTab(store.get('p2p_tab', 'chat'));
+
+    $('createRoomBtn').addEventListener('click', async () => {
+        const v = await dialog({ title: 'Crear sala', message: 'Elige un nombre para tu sala (letras, números y guiones, mín. 3). Si lo dejas vacío se genera uno aleatorio. Activa «Aprobar cada conexión nueva» si quieres controlar quién entra.', input: '', placeholder: 'mi-sala', okText: 'Crear sala' });
+        if (v === null) return;
+        const id = sanitizeId(v);
+        if (v.trim() && id.length < 3) return showToast('El nombre debe tener al menos 3 caracteres', 'error');
+        const target = id || randomId();
+        if (target === myId && role === 'solo') { roomCreated = target; refreshUI(); return openQr(); }
+        if (role !== 'solo' && !(await dialog({ title: '¿Crear otra sala?', message: 'Saldrás de la sala actual y se desconectará a los demás.', okText: 'Continuar', danger: true }))) return;
+        roomCreated = target; initPeer(target); showToast('Creando sala…', 'info');
+    });
+    $('joinRoomBtn').addEventListener('click', async () => {
+        const v = await dialog({ title: 'Unirse a sala', message: 'Introduce el código de la sala o pega su enlace de invitación.', input: '', placeholder: 'sala-abc123', okText: 'Unirme' });
+        if (v === null || !v.trim()) return;
+        remoteIdInput.value = extractRoomId(v); joinRoom(v);
+    });
+
+    // ---------- Editor: eventos y herramientas ----------
+    editor.addEventListener('input', () => { updateStats(); applyLocalEdit(); scheduleSave(); signalTyping('doc'); });
+    $('copyDocBtn').addEventListener('click', () => { if (!editor.value) return showToast('Editor vacío', 'info'); copyWithToast(editor.value, 'Texto copiado'); });
+    function download(ext, mime) {
+        const text = editor.value; if (!text) return showToast('Sin contenido', 'info');
+        const url = URL.createObjectURL(new Blob([text], { type: `${mime};charset=utf-8` }));
+        const a = document.createElement('a'); a.href = url; a.download = `documento-${new Date().toISOString().slice(0, 10)}.${ext}`; document.body.append(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 1000); showToast('Descargado', 'success');
+    }
+    $('downloadTxtBtn').addEventListener('click', () => download('txt', 'text/plain'));
+    $('downloadMdBtn').addEventListener('click', () => download('md', 'text/markdown'));
+    $('clearEditorBtn').addEventListener('click', async () => {
+        if (editor.readOnly) return showToast('La sala está en solo lectura', 'info');
+        if (!editor.value) return;
+        if (!(await dialog({ title: 'Vaciar documento', message: role === 'solo' ? 'Se borrará todo el texto.' : 'Se borrará el texto para todos los de la sala.', okText: 'Vaciar', danger: true }))) return;
+        editor.value = ''; applyLocalEdit(); updateStats();
+    });
+    $('importBtn').addEventListener('click', () => { if (editor.readOnly) return showToast('La sala está en solo lectura', 'info'); $('importInput').click(); });
+    $('importInput').addEventListener('change', async (e) => {
+        const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+        if (f.size > 2 * 1024 * 1024) return showToast('Archivo demasiado grande (máx. 2 MB)', 'error');
+        try {
+            const text = await f.text();
+            if (text.includes('\u0000')) return showToast('Parece un archivo binario, no se puede importar', 'error');
+            if (editor.value.trim() && !(await dialog({ title: 'Importar archivo', message: `Se reemplazará el contenido actual por «${f.name}».`, okText: 'Reemplazar', danger: true }))) return;
+            editor.value = text; applyLocalEdit(); updateStats(); showToast('Archivo importado', 'success');
+        } catch { showToast('No se pudo leer el archivo', 'error'); }
+    });
+    $('restoreBackupBtn').addEventListener('click', async () => {
+        const b = store.get('p2p_backup_doc'); if (!b) return;
+        if (editor.readOnly) return showToast('La sala está en solo lectura', 'info');
+        if (!(await dialog({ title: 'Recuperar copia local', message: 'Se reemplazará el texto actual por el que tenías antes de unirte a la sala.', okText: 'Recuperar' }))) return;
+        editor.value = b; applyLocalEdit(); updateStats(); store.del('p2p_backup_doc'); refreshBackupBtn(); showToast('Copia recuperada', 'success');
+    });
+    let fontSize = Math.min(24, Math.max(11, parseInt(store.get('p2p_font', '14'), 10) || 14));
+    const applyFont = () => { editor.style.fontSize = fontSize + 'px'; store.set('p2p_font', String(fontSize)); };
+    $('fontUpBtn').addEventListener('click', () => { fontSize = Math.min(24, fontSize + 1); applyFont(); });
+    $('fontDownBtn').addEventListener('click', () => { fontSize = Math.max(11, fontSize - 1); applyFont(); });
+    let wrapOn = store.get('p2p_wrap', '1') === '1';
+    const applyWrap = () => { editor.classList.toggle('nowrap', !wrapOn); editor.setAttribute('wrap', wrapOn ? 'soft' : 'off'); store.set('p2p_wrap', wrapOn ? '1' : '0'); };
+    $('wrapBtn').addEventListener('click', () => { wrapOn = !wrapOn; applyWrap(); });
+
+    // ---------- Atajos globales ----------
+    document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Escape') return;
+        if (!dlg.classList.contains('hidden')) dlgCancel.click();
+        else if (!$('lightbox').classList.contains('hidden')) $('lightbox').classList.add('hidden');
+        else if (!$('customThemeModal').classList.contains('hidden')) $('closeCustomThemeBtn').click();
+        else if (qrOpen()) closeQr();
+    });
+
+    // ---------- Arranque ----------
+    (async function main() {
+        icons();
+        applyTheme(savedThemeName());
+        usernameInput.value = myName; refreshSoundIcon(); applyFont(); applyWrap(); refreshBackupBtn();
+        const saved = store.get('p2p_local_doc') || '';
+        editor.value = saved; mirror = saved; updateStats();
+        await loadYjs();
+        if (Y) bindDoc(saved);
+        else showToast('No se pudo cargar Yjs: sincronización básica (el último en escribir gana).', 'info');
+        initPeer();
+    })();
+    </script>
+</body>
+</html>
