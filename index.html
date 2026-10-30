@@ -353,6 +353,154 @@
         [data-theme="classic"] section > .sub.bb svg { color: #fff !important; }
         [data-theme="classic"] ::-webkit-scrollbar-thumb { background: #c0c0c0; border: 2px solid; border-color: #fff #404040 #404040 #fff; border-radius: 0; }
         [data-theme="classic"] ::-webkit-scrollbar-track { background: #e4e4e4; }
+    
+        /* ===== v0.9.3: selector Texto/Pizarra ===== */
+        .seg { display: inline-flex; padding: 2px; gap: 2px; border-radius: 999px; background: var(--sub); border: 1px solid var(--line); }
+        .seg-btn { position: relative; display: inline-flex; align-items: center; gap: .3rem; font-size: .7rem; font-weight: 600; padding: .22rem .7rem; border-radius: 999px;
+                   background: transparent; border: 0; color: var(--color-muted); cursor: pointer; transition: background-color .15s, color .15s; }
+        .seg-btn:hover:not(.active) { color: var(--color-text); }
+        .seg-btn.active { background: var(--btn-primary-bg); color: var(--on-primary); }
+        .board-dot { position: absolute; top: 1px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--warn); animation: dotpulse 1.2s infinite; }
+        .board-dot.hidden { display: none; }
+        @keyframes dotpulse { 50% { transform: scale(1.6); opacity: .55; } }
+        [data-theme="classic"] .seg, [data-theme="classic"] .seg-btn { border-radius: 0; }
+        #boardTools:not(.hidden) { display: flex; }
+        #boardPane:not(.hidden) { display: flex; }
+
+        /* ===== Pizarra ===== */
+        .wb-tool.active { background: color-mix(in srgb, var(--color-primary) 25%, transparent); color: var(--color-primary); }
+        .wb-color { width: 1.7rem; height: 1.7rem; padding: 0; border: 1px solid var(--line); border-radius: 6px; background: transparent; cursor: pointer; }
+        .wb-sw { width: 1rem; height: 1rem; border-radius: 50%; border: 1px solid rgba(0,0,0,.4); cursor: pointer; padding: 0; }
+        .wb-sw.sel { outline: 2px solid var(--color-primary); outline-offset: 1px; }
+        .wb-size { width: 5rem; accent-color: var(--color-primary); }
+        .wb-wrap { position: relative; flex: 1; min-height: 340px; border-radius: var(--radius-sm); overflow: hidden; background: var(--sub); border: 1px solid var(--line); }
+        .wb-canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; touch-action: none; cursor: crosshair; }
+        .wb-wrap.locked .wb-canvas { cursor: not-allowed; }
+
+        /* ===== Reacciones ===== */
+        .msg-row { display: flex; align-items: center; gap: .3rem; max-width: 100%; }
+        .msg-row.mine { flex-direction: row-reverse; }
+        .react-add { width: 1.5rem; height: 1.5rem; border-radius: 999px; display: grid; place-items: center; font-size: .8rem; line-height: 1; flex-shrink: 0;
+                     background: var(--sub); border: 1px solid var(--line); color: var(--color-muted); cursor: pointer; opacity: 0; transition: opacity .15s, transform .15s; }
+        .msg:hover .react-add, .react-add:focus-visible { opacity: 1; }
+        @media (hover: none) { .react-add { opacity: .65; } }
+        .react-add:hover { transform: scale(1.18); }
+        .react-row { display: flex; flex-wrap: wrap; gap: .25rem; padding: 0 .25rem; }
+        .react-row:empty { display: none; }
+        .react-chip { display: inline-flex; align-items: center; gap: .25rem; font-size: .7rem; padding: .05rem .5rem; border-radius: 999px; background: var(--sub);
+                      border: 1px solid var(--line); color: var(--color-text); cursor: pointer; animation: reactPop .25s ease both; }
+        .react-chip.mine { background: color-mix(in srgb, var(--color-primary) 22%, transparent); border-color: var(--color-primary); }
+        @keyframes reactPop { from { transform: scale(.5); opacity: 0; } }
+        .react-picker { position: fixed; z-index: 75; display: flex; gap: .1rem; padding: .3rem .4rem; border-radius: 999px; background: var(--opt-bg); color: var(--color-text);
+                        border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,.45); animation: fadeIn .12s ease both; }
+        .react-picker.hidden { display: none; }
+        .react-picker button { font-size: 1.15rem; width: 2rem; height: 2rem; border-radius: 50%; background: transparent; border: 0; cursor: pointer; transition: transform .12s, background-color .12s; }
+        .react-picker button:hover { transform: scale(1.3); background: var(--line); }
+
+        /* ===== Menciones ===== */
+        .mention { font-weight: 700; color: var(--color-primary); background: color-mix(in srgb, var(--color-primary) 16%, transparent); border-radius: 4px; padding: 0 .2rem; }
+        .bubble.me .mention { color: inherit; background: rgba(255,255,255,.25); text-decoration: underline; }
+        .mention.me { background: var(--warn); color: #1a1200; }
+        .bubble.mentioned { box-shadow: 0 0 0 2px var(--warn), 0 0 14px -2px var(--warn); animation: mentionFlash 1.1s ease 2; }
+        @keyframes mentionFlash { 50% { box-shadow: 0 0 0 3px var(--warn), 0 0 24px 2px var(--warn); } }
+        .mention-box { position: absolute; left: .75rem; bottom: calc(100% - .2rem); z-index: 20; min-width: 11rem; max-width: 17rem; padding: .3rem;
+                       background: var(--opt-bg); border: 1px solid var(--border-color); border-radius: var(--radius-sm); box-shadow: 0 12px 30px -8px rgba(0,0,0,.6); }
+        .mention-box.hidden { display: none; }
+        .mention-item { display: flex; align-items: center; gap: .5rem; width: 100%; text-align: left; font-size: .75rem; padding: .35rem .5rem; border-radius: 6px;
+                        background: transparent; border: 0; color: var(--color-text); cursor: pointer; }
+        .mention-item.sel, .mention-item:hover { background: color-mix(in srgb, var(--color-primary) 22%, transparent); }
+
+        /* ===== Mensaje especial //texto// ===== */
+        #chatContainer .bubble.special { position: relative; max-width: 92%; padding: .7rem 1.15rem; font-size: 1.05rem; font-weight: 800; text-align: center; color: #fff; border: 0;
+            border-radius: max(var(--bubble-radius), 14px); overflow: visible; text-shadow: 0 1px 3px rgba(0,0,0,.6);
+            background: linear-gradient(120deg, #ff2d95, #ff9a3c, #ffe14d, #3dffb0, #35b8ff, #a855f7, #ff2d95); background-size: 300% 300%;
+            box-shadow: 0 0 0 2px rgba(255,255,255,.6), 0 8px 28px -4px rgba(168,85,247,.75);
+            animation: specialPop .55s cubic-bezier(.2,1.6,.4,1) both, specialGrad 5s ease-in-out infinite alternate, specialGlow 2s ease-in-out infinite; }
+        #chatContainer .bubble.special .mention, #chatContainer .bubble.special a { color: #fff; }
+        #chatContainer .bubble.special::before, #chatContainer .bubble.special::after { content: '✨'; position: absolute; font-size: 1.05rem; animation: specialTwinkle 1.4s ease-in-out infinite; }
+        #chatContainer .bubble.special::before { top: -.6rem; left: -.45rem; }
+        #chatContainer .bubble.special::after { bottom: -.55rem; right: -.4rem; animation-delay: .7s; }
+        @keyframes specialPop { 0% { transform: scale(.3) rotate(-6deg); opacity: 0; } 60% { transform: scale(1.12) rotate(2deg); opacity: 1; } 100% { transform: scale(1) rotate(0); } }
+        @keyframes specialGrad { from { background-position: 0% 50%; } to { background-position: 100% 50%; } }
+        @keyframes specialGlow { 50% { box-shadow: 0 0 0 2px rgba(255,255,255,.85), 0 8px 40px 2px rgba(255,45,149,.85); } }
+        @keyframes specialTwinkle { 0%, 100% { transform: scale(.6) rotate(0); opacity: .5; } 50% { transform: scale(1.3) rotate(25deg); opacity: 1; } }
+        .confetti { position: absolute; left: 50%; top: 50%; pointer-events: none; font-size: .95rem; z-index: 3; animation: confetti 1s ease-out forwards; }
+        @keyframes confetti { from { transform: translate(0, 0) scale(.4); opacity: 1; } to { transform: translate(var(--dx), var(--dy)) rotate(var(--rot)) scale(1.1); opacity: 0; } }
+        #chatInput.is-special { border-color: #c084fc; box-shadow: 0 0 0 2px #c084fc, 0 0 16px #ff2d95aa; }
+
+        /* ===== Indicador de escritura ===== */
+        .typing-dots { display: inline-flex; gap: 3px; align-items: center; padding: .25rem .5rem; border-radius: 999px; background: var(--sub); }
+        .typing-dots span { width: 4px; height: 4px; border-radius: 50%; background: var(--color-muted); animation: typingBounce 1.1s infinite; }
+        .typing-dots span:nth-child(2) { animation-delay: .15s; }
+        .typing-dots span:nth-child(3) { animation-delay: .3s; }
+        @keyframes typingBounce { 0%, 60%, 100% { transform: translateY(0); opacity: .4; } 30% { transform: translateY(-4px); opacity: 1; } }
+
+        /* ===== SpongeBob (ahora en Estilos): más burbujeante ===== */
+        [data-theme="spongebob"] {
+            --radius: 22px; --radius-sm: 16px; --btn-radius: 999px; --field-radius: 14px; --bubble-radius: 22px;
+            --card-shadow: 0 6px 0 rgba(7,89,133,.55);
+            --body-bg: radial-gradient(circle at 18% 14%, rgba(255,255,255,.28) 0 38px, transparent 40px),
+                       radial-gradient(circle at 86% 68%, rgba(255,255,255,.18) 0 70px, transparent 72px),
+                       radial-gradient(circle at 60% 90%, rgba(255,255,255,.14) 0 46px, transparent 48px),
+                       linear-gradient(180deg, #38bdf8 0%, #0284c7 55%, #075985 100%);
+            --bubble-me-bg: #facc15; --bubble-me-fg: #1e3a8a; --btn-primary-bg: #facc15; --btn-primary-hover-bg: #eab308; --btn-primary-border: #ca8a04;
+        }
+
+        /* ===== Edgerunner (Cyberpunk 2077) ===== */
+        [data-theme="edgerunner"] {
+            --bg-main: #0a0a0f; --bg-card: #12111a; --border-color: #3b3556;
+            --color-primary: #fcee0a; --color-primary-hover: #ffe600; --on-primary: #000000;
+            --color-text: #eef0f2; --color-muted: #8f8aa8;
+            --font-family: Rajdhani, Bahnschrift, 'Segoe UI Semibold', 'Arial Narrow', sans-serif; color-scheme: dark;
+            --ok: #00f0ff; --warn: #ff2a6d; --info: #00f0ff;
+            --radius: 2px; --radius-sm: 2px; --btn-radius: 0px; --field-radius: 0px; --bubble-radius: 0px;
+            --body-bg: linear-gradient(rgba(252,238,10,.035) 1px, transparent 1px) 0 0 / 44px 44px,
+                       linear-gradient(90deg, rgba(252,238,10,.035) 1px, transparent 1px) 0 0 / 44px 44px,
+                       radial-gradient(720px 420px at 0% 0%, rgba(255,42,109,.30), transparent 65%),
+                       radial-gradient(720px 420px at 100% 100%, rgba(0,240,255,.24), transparent 65%), #0a0a0f;
+            --card-bg: linear-gradient(180deg, #14121e, #0e0d15);
+            --card-shadow: 0 0 0 1px rgba(252,238,10,.12), 0 0 26px -10px rgba(255,42,109,.6);
+            --header-bg: linear-gradient(90deg, #0a0a0f, #1a0f26 60%, #0a1a24); --header-fg: #eef0f2;
+            --btn-primary-bg: #fcee0a; --btn-primary-hover-bg: #fff35c; --btn-primary-border: #fcee0a;
+            --btn-ghost-bg: rgba(0,240,255,.07); --btn-ghost-hover-bg: rgba(0,240,255,.22); --btn-ghost-border: rgba(0,240,255,.55); --btn-shadow: none;
+            --field-bg: #0b0a11; --field-border: rgba(252,238,10,.4);
+            --bubble-me-bg: #fcee0a; --bubble-me-fg: #000000; --bubble-them-bg: #1a1726;
+            --opt-bg: #12111a; --chat-bg: linear-gradient(180deg, rgba(0,0,0,.3), rgba(255,42,109,.06));
+        }
+        [data-theme="edgerunner"] .btn, [data-theme="edgerunner"] .field, [data-theme="edgerunner"] .chip,
+        [data-theme="edgerunner"] .bubble:not(.special), [data-theme="edgerunner"] .seg-btn {
+            clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px)); }
+        [data-theme="edgerunner"] .btn-primary, [data-theme="edgerunner"] .menu-tab.active { text-transform: uppercase; letter-spacing: .06em; font-weight: 800; }
+        [data-theme="edgerunner"] .btn-ghost, [data-theme="edgerunner"] .menu-tab { color: #00f0ff; }
+        [data-theme="edgerunner"] section.card, [data-theme="edgerunner"] nav.card { border-left: 3px solid #fcee0a; }
+        [data-theme="edgerunner"] .app-header { border-bottom: 2px solid #fcee0a !important; }
+        [data-theme="edgerunner"] .app-header h1 { text-transform: uppercase; letter-spacing: .12em; color: #fcee0a; animation: glitch 3.4s infinite steps(1); }
+        @keyframes glitch { 0%, 91%, 100% { text-shadow: none; transform: none; } 92% { text-shadow: -2px 0 #ff2a6d, 2px 0 #00f0ff; transform: translateX(1px); }
+            94% { text-shadow: 2px 0 #ff2a6d, -2px 0 #00f0ff; transform: translateX(-1px); } 96% { text-shadow: -1px 0 #00f0ff, 1px 0 #ff2a6d; transform: none; } }
+        [data-theme="edgerunner"] section > .sub.bb { background: linear-gradient(90deg, rgba(252,238,10,.16), transparent 70%); border-bottom: 1px solid rgba(252,238,10,.45);
+            text-transform: uppercase; letter-spacing: .08em; }
+        [data-theme="edgerunner"] .bubble.them { border: 1px solid #2b2640; border-left: 3px solid #ff2a6d; }
+        [data-theme="edgerunner"] .field:focus-visible { border-color: #fcee0a; }
+        [data-theme="edgerunner"] .mention { color: #00f0ff; background: rgba(0,240,255,.14); }
+        [data-theme="edgerunner"] body::after { content: ''; position: fixed; inset: 0; z-index: 90; pointer-events: none; mix-blend-mode: overlay;
+            background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px); }
+        [data-theme="edgerunner"] ::-webkit-scrollbar-thumb { background: rgba(252,238,10,.55); border-radius: 0; }
+        [data-theme="edgerunner"] ::-webkit-scrollbar-track { background: transparent; }
+
+        @media (prefers-reduced-motion: reduce) { .confetti { display: none; } }
+    
+        /* ===== Moderación ===== */
+        .mod-menu { position: fixed; z-index: 76; min-width: 14rem; padding: .3rem; background: var(--opt-bg); color: var(--color-text); border: 1px solid var(--border-color);
+                    border-radius: var(--radius-sm); box-shadow: 0 14px 34px -8px rgba(0,0,0,.6); animation: fadeIn .12s ease both; }
+        .mod-menu.hidden { display: none; }
+        .mod-head { font-size: .68rem; font-weight: 700; color: var(--color-muted); padding: .35rem .6rem .2rem; }
+        .mod-item { display: flex; align-items: center; justify-content: space-between; gap: .75rem; width: 100%; text-align: left; font-size: .75rem; padding: .42rem .6rem;
+                    border-radius: 6px; background: transparent; border: 0; color: inherit; cursor: pointer; }
+        .mod-item:hover, .mod-item:focus-visible { background: var(--line); outline: none; }
+        .mod-item.danger { color: var(--bad); }
+        .mod-item .ck { color: var(--color-primary); font-weight: 700; }
+        .mod-sep { height: 1px; background: var(--line); margin: .3rem .4rem; }
+        .bubble.shadowed { opacity: .65; border: 1px dashed var(--color-muted) !important; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col antialiased overflow-x-hidden">
@@ -382,7 +530,6 @@
                         <optgroup label="Colores">
                             <option value="dark">🌙 Dark Slate</option>
                             <option value="light">☀️ Claro</option>
-                            <option value="spongebob">🧽 SpongeBob</option>
                             <option value="cyberpunk">🌆 Cyberpunk</option>
                             <option value="forest">🌲 Forest</option>
                             <option value="dracula">🧛‍♂️ Dracula</option>
@@ -393,6 +540,8 @@
                             <option value="frutiger">🫧 Frutiger Aero</option>
                             <option value="win7">🪟 Windows 7</option>
                             <option value="classic">🖥️ Clásico (Windows)</option>
+                            <option value="spongebob">🧽 SpongeBob</option>
+                            <option value="edgerunner">⚡ Edgerunner</option>
                         </optgroup>
                         <option value="custom">🎨 Personalizado…</option>
                     </select>
@@ -474,8 +623,23 @@
                         <span class="text-xs font-semibold">Editor</span>
                         <span id="docTyping" class="text-[10px] italic hidden truncate" style="color: var(--warn)"></span>
                         <span id="readonlyBadge" class="chip neutral hidden"><i data-lucide="lock" class="w-3 h-3"></i> Solo lectura</span>
+                        <div class="seg" role="tablist" aria-label="Vista del editor">
+                            <button type="button" id="viewTextBtn" class="seg-btn active" role="tab" aria-selected="true"><i data-lucide="file-text" class="w-3.5 h-3.5"></i><span>Texto</span></button>
+                            <button type="button" id="viewBoardBtn" class="seg-btn" role="tab" aria-selected="false"><i data-lucide="pen-tool" class="w-3.5 h-3.5"></i><span>Pizarra</span><span id="boardDot" class="board-dot hidden"></span></button>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-0.5 flex-wrap">
+                    <div id="boardTools" class="hidden items-center gap-1 flex-wrap">
+                        <button id="wbPen" class="icon-btn wb-tool active" title="Lápiz" aria-label="Lápiz"><i data-lucide="pencil" class="w-4 h-4"></i></button>
+                        <button id="wbEraser" class="icon-btn wb-tool" title="Borrador" aria-label="Borrador"><i data-lucide="eraser" class="w-4 h-4"></i></button>
+                        <input type="color" id="wbColor" value="#ef4444" class="wb-color" title="Color" aria-label="Color">
+                        <div id="wbSwatches" class="flex items-center gap-1"></div>
+                        <input type="range" id="wbSize" min="1" max="40" value="4" class="wb-size" title="Grosor" aria-label="Grosor del trazo">
+                        <span class="w-px h-4 mx-1" style="background: var(--line)"></span>
+                        <button id="wbUndo" class="icon-btn" title="Deshacer mi último trazo (Ctrl+Z)" aria-label="Deshacer"><i data-lucide="undo-2" class="w-4 h-4"></i></button>
+                        <button id="wbSave" class="icon-btn" title="Descargar como PNG" aria-label="Descargar pizarra"><i data-lucide="download" class="w-4 h-4"></i></button>
+                        <button id="wbClear" class="icon-btn danger" title="Vaciar pizarra" aria-label="Vaciar pizarra"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                    <div id="textTools" class="flex items-center gap-0.5 flex-wrap">
                         <button id="fontDownBtn" class="icon-btn" title="Reducir fuente" aria-label="Reducir fuente"><i data-lucide="a-arrow-down" class="w-4 h-4"></i></button>
                         <button id="fontUpBtn" class="icon-btn" title="Aumentar fuente" aria-label="Aumentar fuente"><i data-lucide="a-arrow-up" class="w-4 h-4"></i></button>
                         <button id="wrapBtn" class="icon-btn" title="Ajuste de línea" aria-label="Alternar ajuste de línea"><i data-lucide="wrap-text" class="w-4 h-4"></i></button>
@@ -490,14 +654,18 @@
                     </div>
                 </div>
 
-                <div class="flex-1 p-3 flex flex-col min-h-0">
+                <div id="boardPane" class="hidden flex-1 p-3 flex-col min-h-0">
+                    <div id="wbWrap" class="wb-wrap"><canvas id="wbCanvas" class="wb-canvas" aria-label="Pizarra compartida"></canvas></div>
+                </div>
+
+                <div id="textPane" class="flex-1 p-3 flex flex-col min-h-0">
                     <label for="documentEditor" class="sr-only">Documento</label>
                     <textarea id="documentEditor" spellcheck="false"
                         class="field w-full flex-1 min-h-[360px] p-4 text-sm leading-relaxed resize-none"
                         placeholder="Escribe tu documento aquí. Se guarda en tu navegador y se sincroniza en tiempo real con quien se una a la sala…"></textarea>
                 </div>
 
-                <div class="sub bt px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] muted shrink-0">
+                <div id="textFooter" class="sub bt px-4 py-1.5 flex flex-wrap items-center justify-between gap-2 text-[11px] muted shrink-0">
                     <div class="flex items-center gap-2">
                         <span id="charCount">0 caracteres</span><span>•</span>
                         <span id="wordCount">0 palabras</span><span>•</span>
@@ -525,6 +693,10 @@
                     <div id="hostSettings" class="bt px-4 py-2.5 space-y-2">
                         <label class="switch"><span>Aprobar cada conexión nueva</span><input type="checkbox" id="optApprove"></label>
                         <label class="switch"><span>Solo lectura para invitados</span><input type="checkbox" id="optReadonly"></label>
+                        <div id="banWrap" class="hidden pt-1">
+                            <p class="text-[11px] font-semibold muted mb-1">Baneados</p>
+                            <ul id="banList" class="space-y-1 max-h-24 overflow-y-auto"></ul>
+                        </div>
                     </div>
                 </section>
 
@@ -549,9 +721,10 @@
                             <p>Conéctate a una sala para chatear.<br>Mensajes, enlaces e imágenes viajan directamente entre navegadores.</p>
                         </div>
                     </div>
-                    <div id="chatTyping" class="px-4 pb-1 text-[10px] italic h-4 muted"></div>
+                    <div id="chatTyping" class="px-4 pb-1 text-[10px] h-5 muted flex items-center gap-1.5" aria-live="polite"></div>
 
-                    <form id="chatForm" class="p-3 bt sub flex gap-2 items-end shrink-0">
+                    <form id="chatForm" class="p-3 bt sub flex gap-2 items-end shrink-0 relative">
+                        <div id="mentionBox" class="mention-box hidden" role="listbox" aria-label="Mencionar usuario"></div>
                         <input type="file" id="imageInput" accept="image/*" class="hidden">
                         <button type="button" id="uploadImgBtn" class="btn btn-ghost" style="padding:.5rem" title="Enviar imagen o sticker (también puedes pegar o arrastrar)" aria-label="Enviar imagen" disabled><i data-lucide="image" class="w-4 h-4"></i></button>
                         <label for="chatInput" class="sr-only">Mensaje</label>
@@ -709,7 +882,7 @@
     dlgInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); dlgOk.click(); } });
 
     // ---------- Temas ----------
-    const THEMES = ['dark', 'light', 'spongebob', 'cyberpunk', 'forest', 'dracula', 'telegram', 'telegram-dark', 'frutiger', 'win7', 'classic', 'custom'];
+    const THEMES = ['dark', 'light', 'spongebob', 'cyberpunk', 'forest', 'dracula', 'telegram', 'telegram-dark', 'frutiger', 'win7', 'classic', 'edgerunner', 'custom'];
     const CUSTOM_DEFAULT = { bgMain: '#0f172a', bgCard: '#1e293b', border: '#334155', primary: '#6366f1', text: '#f8fafc' };
     const customFields = { bgMain: $('customBgMain'), bgCard: $('customBgCard'), border: $('customBorder'), primary: $('customPrimary'), text: $('customText') };
     const THEME_VARS = ['--bg-main', '--bg-card', '--border-color', '--color-primary', '--color-primary-hover', '--color-text', '--color-muted', '--on-primary', 'color-scheme'];
@@ -757,7 +930,7 @@
     const SW = { dark: ['#0f172a', '#1e293b', '#6366f1'], light: ['#f1f5f9', '#ffffff', '#4f46e5'], spongebob: ['#0284c7', '#0ea5e9', '#facc15'],
         cyberpunk: ['#09090b', '#18181b', '#06b6d4'], forest: ['#052e16', '#14532d', '#10b981'], dracula: ['#282a36', '#44475a', '#ff79c6'],
         telegram: ['#dfe6ec', '#ffffff', '#3390ec'], 'telegram-dark': ['#0e1621', '#17212b', '#5288c1'], frutiger: ['#4fb9f2', '#d9f4c6', '#1d93dc'],
-        win7: ['#1666ae', '#f0f0f0', '#2f84cf'], classic: ['#008080', '#c0c0c0', '#000080'] };
+        win7: ['#1666ae', '#f0f0f0', '#2f84cf'], classic: ['#008080', '#c0c0c0', '#000080'], edgerunner: ['#0a0a0f', '#00f0ff', '#fcee0a'] };
     const themeBtn = $('themeBtn'), themeMenu = $('themeMenu');
     const swatchBg = (v) => { const c = SW[v]; return c ? `linear-gradient(135deg, ${c[0]} 0 45%, ${c[1]} 45% 70%, ${c[2]} 70%)` : 'conic-gradient(#f43f5e, #facc15, #22c55e, #06b6d4, #6366f1, #f43f5e)'; };
     const plainName = (t) => t.replace(/^[^\p{L}]+/u, '').trim();
@@ -858,6 +1031,15 @@
     const hostMode = () => (roomCreated && roomCreated === myId ? 'room' : 'dm');
     const curMode = () => (role === 'guest' ? roomMode : hostMode());
 
+    // ---------- Moderación (estado) ----------
+    const deviceId = (() => { let d = store.get('p2p_device'); if (!d) { d = uid() + uid(); store.set('p2p_device', d); } return d; })();
+    let myMod = { editor: 'rw', chat: 'rw', slow: 0 }, chatCooldownUntil = 0, chatCooldownTimer = null;   // lo que el anfitrión me ha impuesto
+    const modsById = new Map();                                                                          // anfitrión: restricciones por usuario
+    const getMod = (id) => { let m = modsById.get(id); if (!m) { m = { editor: 'rw', chat: 'rw', slow: 0, shadow: false }; modsById.set(id, m); } return m; };
+    let bans = [];
+    try { const b = JSON.parse(store.get('p2p_bans', '[]')); if (Array.isArray(b)) bans = b.filter((x) => x && typeof x.id === 'string').slice(-200).map((x) => ({ id: String(x.id).slice(0, 64), dev: String(x.dev || '').slice(0, 40), name: cleanName(x.name) })); } catch {}
+    const saveBans = () => store.set('p2p_bans', JSON.stringify(bans.slice(-200)));
+
     const safeSend = (conn, msg) => { try { if (conn && conn.open) conn.send(msg); } catch (e) { console.warn('send', e); } };
     function sendAll(msg, except = null) {
         if (role === 'host') { for (const e of conns.values()) if (e.ready && e.conn !== except) safeSend(e.conn, msg); }
@@ -880,8 +1062,15 @@
             li.append(av, nm);
             if (p.host) { const t = document.createElement('span'); t.className = 'chip neutral'; t.style.cssText = 'padding:.05rem .45rem;font-size:.6rem'; t.textContent = 'anfitrión'; li.append(t); }
             if (role === 'host' && p.id !== myId) {
-                const k = document.createElement('button'); k.className = 'icon-btn danger'; k.title = 'Expulsar'; k.setAttribute('aria-label', 'Expulsar a ' + p.name);
-                k.innerHTML = '<i data-lucide="user-x" class="w-3.5 h-3.5"></i>'; k.addEventListener('click', () => kick(p.id)); li.append(k);
+                const k = document.createElement('button');
+                {
+                    const mm = modsById.get(p.id), tg = [];
+                    if (mm) { if (mm.editor === 'ro') tg.push('🔒 editor'); if (mm.chat === 'ro') tg.push('🔇 chat'); if (mm.slow) tg.push('⏱ ' + mm.slow + ' s'); if (mm.shadow) tg.push('👻'); }
+                    if (tg.length) { const t = document.createElement('span'); t.className = 'chip neutral'; t.style.cssText = 'padding:.05rem .4rem;font-size:.58rem'; t.textContent = tg.join(' '); t.title = 'Restricciones activas'; li.append(t); }
+                    k.className = 'icon-btn mod-open'; k.title = 'Moderar'; k.setAttribute('aria-label', 'Moderar a ' + p.name);
+                    k.innerHTML = '<i data-lucide="shield" class="w-3.5 h-3.5"></i>'; k.addEventListener('click', (ev) => { ev.stopPropagation(); openModMenu(p.id, k); });
+                }
+                li.append(k);
             }
             rosterList.append(li);
         }
@@ -904,7 +1093,8 @@
         }
         const inRoom = role !== 'solo';
         chatInput.disabled = !inRoom; sendMsgBtn.disabled = !inRoom; uploadImgBtn.disabled = !inRoom;
-        chatInput.placeholder = inRoom ? 'Mensaje… (Enter envía)' : 'Mensaje…';
+        chatInput.placeholder = inRoom ? 'Mensaje… (@ menciona · //texto// destaca)' : 'Mensaje…';
+        applyModUI(); renderBans();
         const chatBadge = $('chatPeerBadge');
         chatBadge.className = 'chip ' + (inRoom ? 'connected' : 'neutral'); chatBadge.style.cssText = 'padding:.1rem .5rem;font-size:.62rem';
         chatBadge.textContent = inRoom ? `${n} en línea` : 'Sin conexión';
@@ -912,8 +1102,8 @@
         leaveLabel.textContent = role === 'host' ? 'Cerrar sala' : 'Salir';
         optApprove.checked = roomSettings.approve; optReadonly.checked = roomSettings.readonly;
         optApprove.disabled = optReadonly.disabled = role === 'guest';
-        const ro = role === 'guest' && roomSettings.readonly;
-        editor.readOnly = ro; $('readonlyBadge').classList.toggle('hidden', !(roomSettings.readonly && role !== 'solo'));
+        const ro = role === 'guest' && (roomSettings.readonly || myMod.editor === 'ro');
+        editor.readOnly = ro; $('wbWrap').classList.toggle('locked', ro); $('readonlyBadge').classList.toggle('hidden', !((roomSettings.readonly || (role === 'guest' && myMod.editor === 'ro')) && role !== 'solo'));
         const dm = role !== 'solo' && curMode() === 'dm';
         $('roomTitle').textContent = dm ? 'Chat directo' : 'Sala';
         $('chatTitle').textContent = role === 'solo' ? 'Chat' : dm ? 'Chat directo' : 'Chat de sala';
@@ -1024,7 +1214,7 @@
     function renderTyping() {
         const d = [...typers.doc.keys()], c = [...typers.chat.keys()];
         const el = $('docTyping'); el.classList.toggle('hidden', !d.length); el.textContent = d.length ? `${d.join(', ')} escribiendo…` : '';
-        $('chatTyping').textContent = c.length ? `${c.join(', ')} escribiendo…` : '';
+        renderChatTyping(c);
     }
     const localTyping = { doc: { on: false, t: null }, chat: { on: false, t: null } };
     function signalTyping(scope) {
@@ -1035,17 +1225,361 @@
         s.t = setTimeout(() => { s.on = false; sendAll({ type: 'TYPING', scope, on: false, from: myId, name: myName }); }, 1500);
     }
 
+    // ---------- Indicador de escritura (animado) ----------
+    function renderChatTyping(c) {
+        const el = $('chatTyping'); el.textContent = '';
+        if (!c.length) return;
+        const dots = document.createElement('span'); dots.className = 'typing-dots'; dots.innerHTML = '<span></span><span></span><span></span>';
+        const t = document.createElement('span');
+        t.textContent = c.length === 1 ? `${c[0]} está escribiendo…` : c.length === 2 ? `${c[0]} y ${c[1]} están escribiendo…` : 'Varias personas están escribiendo…';
+        el.append(dots, t);
+    }
+
+    // ---------- Mensajes especiales //texto// ----------
+    const SPECIAL_RE = /^\/\/([\s\S]+?)\/\/$/;
+    function burst(el) {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const E = ['✨', '🎉', '⭐', '💫', '🎊'];
+        for (let i = 0; i < 14; i++) {
+            const sp = document.createElement('span'); sp.className = 'confetti'; sp.textContent = E[i % E.length];
+            const a = Math.random() * Math.PI * 2, d = 40 + Math.random() * 60;
+            sp.style.setProperty('--dx', Math.cos(a) * d + 'px'); sp.style.setProperty('--dy', Math.sin(a) * d - 20 + 'px'); sp.style.setProperty('--rot', (Math.random() * 360 - 180) + 'deg');
+            el.append(sp); setTimeout(() => sp.remove(), 1100);
+        }
+    }
+    chatInput.addEventListener('input', () => chatInput.classList.toggle('is-special', SPECIAL_RE.test(chatInput.value.trim())));
+    $('chatForm').addEventListener('submit', () => chatInput.classList.remove('is-special'));
+
+    // ---------- Menciones ----------
+    function mentionRe() {
+        const names = [...new Set([...currentRoster().map((p) => p.name), 'todos'])].sort((a, b) => b.length - a.length).map((n) => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        return new RegExp(`(?<![\\p{L}\\p{N}_@])@(${names.join('|')})(?![\\p{L}\\p{N}_])`, 'giu');
+    }
+    const isMe = (n) => n.toLowerCase() === 'todos' || n.toLowerCase() === myName.toLowerCase();
+    function mentionNodes(text) {
+        const frag = document.createDocumentFragment(), re = mentionRe(); let last = 0, m;
+        while ((m = re.exec(text))) {
+            frag.append(text.slice(last, m.index));
+            const sp = document.createElement('span'); sp.className = 'mention' + (isMe(m[1]) ? ' me' : ''); sp.textContent = '@' + m[1];
+            frag.append(sp); last = m.index + m[0].length;
+        }
+        frag.append(text.slice(last)); return frag;
+    }
+    function mentionsMe(text) { const re = mentionRe(); let m; while ((m = re.exec(text))) if (isMe(m[1])) return true; return false; }
+
+    const mentionBox = $('mentionBox'); let mentionSel = 0, mentionItems = [], mentionStart = -1;
+    function closeMention() { mentionBox.classList.add('hidden'); mentionItems = []; mentionStart = -1; }
+    function updateMention() {
+        const pos = chatInput.selectionStart ?? chatInput.value.length;
+        const m = /(?:^|\s)@([^\s@]{0,24})$/.exec(chatInput.value.slice(0, pos));
+        if (!m || role === 'solo') return closeMention();
+        const q = m[1].toLowerCase();
+        const list = [...new Set([...currentRoster().filter((p) => p.id !== myId).map((p) => p.name), 'todos'])].filter((n) => n.toLowerCase().startsWith(q)).slice(0, 6);
+        if (!list.length) return closeMention();
+        mentionStart = pos - m[1].length - 1; mentionItems = list; mentionSel = Math.min(mentionSel, list.length - 1);
+        mentionBox.textContent = '';
+        list.forEach((n, i) => {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'mention-item' + (i === mentionSel ? ' sel' : ''); b.setAttribute('role', 'option');
+            const av = document.createElement('span'); av.className = 'avatar'; av.style.background = n === 'todos' ? 'var(--color-primary)' : `hsl(${hueOf(n)} 60% 42%)`; av.textContent = n === 'todos' ? '@' : n.charAt(0).toUpperCase();
+            const t = document.createElement('span'); t.className = 'truncate'; t.textContent = n === 'todos' ? 'todos (avisar a todos)' : n;
+            b.append(av, t); b.addEventListener('mousedown', (e) => { e.preventDefault(); pickMention(i); }); mentionBox.append(b);
+        });
+        mentionBox.classList.remove('hidden');
+    }
+    function pickMention(i) {
+        const n = mentionItems[i]; if (n == null) return;
+        const pos = chatInput.selectionStart, v = chatInput.value;
+        chatInput.value = v.slice(0, mentionStart) + '@' + n + ' ' + v.slice(pos);
+        const np = mentionStart + n.length + 2; chatInput.setSelectionRange(np, np);
+        closeMention(); chatInput.focus(); chatInput.dispatchEvent(new Event('input'));
+    }
+    chatInput.addEventListener('input', () => { mentionSel = 0; updateMention(); });
+    chatInput.addEventListener('blur', () => setTimeout(closeMention, 150));
+    chatInput.addEventListener('keydown', (e) => {
+        if (mentionBox.classList.contains('hidden')) return;
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); mentionSel = (mentionSel + (e.key === 'ArrowDown' ? 1 : -1) + mentionItems.length) % mentionItems.length; updateMention(); }
+        else if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); e.stopImmediatePropagation(); pickMention(mentionSel); }
+        else if (e.key === 'Escape') { e.preventDefault(); closeMention(); }
+    }, true);
+
+    // ---------- Reacciones con emojis ----------
+    const REACTS = ['👍', '❤️', '😂', '😮', '😢', '🔥', '🎉', '👀', '🙏', '👎'];
+    const reacts = new Map();   // mid -> Map(emoji -> Set(userId))
+    const msgEls = new Map();   // mid -> contenedor de chips
+    function renderReactions(mid) {
+        const row = msgEls.get(mid); if (!row) return; row.textContent = '';
+        const m = reacts.get(mid); if (!m) return;
+        const names = new Map(currentRoster().map((p) => [p.id, p.name]));
+        for (const [emoji, set] of m) {
+            if (!set.size) continue;
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'react-chip' + (set.has(myId) ? ' mine' : ''); b.textContent = `${emoji} ${set.size}`;
+            b.title = [...set].map((id) => (id === myId ? 'Tú' : names.get(id) || 'Alguien')).join(', ');
+            b.addEventListener('click', () => toggleReact(mid, emoji)); row.append(b);
+        }
+    }
+    function applyReact(mid, emoji, who, on) {
+        let m = reacts.get(mid); if (!m) { if (!on) return; m = new Map(); reacts.set(mid, m); }
+        let set = m.get(emoji); if (!set) { if (!on) return; set = new Set(); m.set(emoji, set); }
+        if (on) set.add(who); else set.delete(who);
+        if (!set.size) m.delete(emoji);
+        renderReactions(mid);
+    }
+    function toggleReact(mid, emoji) {
+        const on = !reacts.get(mid)?.get(emoji)?.has(myId);
+        applyReact(mid, emoji, myId, on); sendAll({ type: 'REACT', mid, emoji, on, from: myId });
+    }
+    const cleanReact = (d) => (typeof d.mid === 'string' && d.mid.length <= 24 && REACTS.includes(d.emoji) ? { mid: d.mid, emoji: d.emoji, on: !!d.on } : null);
+    const reactPicker = document.createElement('div'); reactPicker.className = 'react-picker hidden'; document.body.append(reactPicker);
+    REACTS.forEach((e) => { const b = document.createElement('button'); b.type = 'button'; b.textContent = e; b.setAttribute('aria-label', 'Reaccionar con ' + e);
+        b.addEventListener('click', () => { toggleReact(reactPicker.dataset.mid, e); closeReactPicker(); }); reactPicker.append(b); });
+    function openReactPicker(mid, anchor) {
+        reactPicker.dataset.mid = mid; reactPicker.classList.remove('hidden');
+        const r = anchor.getBoundingClientRect(), pw = reactPicker.offsetWidth, ph = reactPicker.offsetHeight;
+        reactPicker.style.left = Math.min(Math.max(8, r.left + r.width / 2 - pw / 2), window.innerWidth - pw - 8) + 'px';
+        reactPicker.style.top = (r.top - ph - 6 < 8 ? r.bottom + 6 : r.top - ph - 6) + 'px';
+    }
+    function closeReactPicker() { reactPicker.classList.add('hidden'); }
+    document.addEventListener('click', (e) => { if (!reactPicker.classList.contains('hidden') && !e.target.closest('.react-picker, .react-add')) closeReactPicker(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeReactPicker(); });
+
+    // ---------- Vista del editor: Texto / Pizarra ----------
+    let editorView = 'text';
+    function setView(v) {
+        editorView = v === 'board' ? 'board' : 'text'; const b = editorView === 'board';
+        $('viewTextBtn').classList.toggle('active', !b); $('viewBoardBtn').classList.toggle('active', b);
+        $('viewTextBtn').setAttribute('aria-selected', String(!b)); $('viewBoardBtn').setAttribute('aria-selected', String(b));
+        $('textPane').classList.toggle('hidden', b); $('textTools').classList.toggle('hidden', b); $('textFooter').classList.toggle('hidden', b);
+        $('boardPane').classList.toggle('hidden', !b); $('boardTools').classList.toggle('hidden', !b);
+        if (b) $('boardDot').classList.add('hidden');
+        store.set('p2p_view', editorView);
+    }
+    $('viewTextBtn').addEventListener('click', () => setView('text'));
+    $('viewBoardBtn').addEventListener('click', () => setView('board'));
+
+    // ---------- Pizarra compartida ----------
+    const WB_W = 1280, WB_H = 720, WB_MAXPTS = 150000;
+    const wbCv = $('wbCanvas'), wbCtx = wbCv.getContext('2d');
+    wbCv.width = WB_W; wbCv.height = WB_H;
+    const wbLayer = document.createElement('canvas'); wbLayer.width = WB_W; wbLayer.height = WB_H;
+    const wbL = wbLayer.getContext('2d');
+    const wb = { strokes: [], map: new Map(), total: 0, tool: 'pen', color: '#ef4444', size: 4, cur: null };
+    const wbCanDraw = () => !(role === 'guest' && (roomSettings.readonly || myMod.editor === 'ro'));
+    function wbPaint() { wbCtx.fillStyle = '#ffffff'; wbCtx.fillRect(0, 0, WB_W, WB_H); wbCtx.drawImage(wbLayer, 0, 0); }
+    function wbSeg(st, start) {
+        const p = st.pts; if (p.length < 2) return;
+        wbL.save(); wbL.globalCompositeOperation = st.tool === 'eraser' ? 'destination-out' : 'source-over';
+        wbL.strokeStyle = wbL.fillStyle = st.color; wbL.lineWidth = st.size; wbL.lineCap = wbL.lineJoin = 'round';
+        if (p.length === 2) { wbL.beginPath(); wbL.arc(p[0], p[1], st.size / 2, 0, Math.PI * 2); wbL.fill(); }
+        else { const i0 = Math.max(0, start - 2); wbL.beginPath(); wbL.moveTo(p[i0], p[i0 + 1]); for (let i = i0 + 2; i < p.length; i += 2) wbL.lineTo(p[i], p[i + 1]); wbL.stroke(); }
+        wbL.restore();
+    }
+    function wbRedraw() { wbL.clearRect(0, 0, WB_W, WB_H); for (const st of wb.strokes) wbSeg(st, 0); wbPaint(); }
+    function wbApply(d, from) {
+        let st = wb.map.get(d.sid);
+        if (!st) { st = { sid: d.sid, tool: d.tool, color: d.color, size: d.size, pts: [], from }; wb.strokes.push(st); wb.map.set(d.sid, st); }
+        const start = st.pts.length; for (const n of d.pts) st.pts.push(n); wb.total += d.pts.length;
+        wbSeg(st, start);
+        if (wb.total > WB_MAXPTS) {
+            while (wb.total > WB_MAXPTS * 0.8 && wb.strokes.length > 1) { const o = wb.strokes.shift(); wb.map.delete(o.sid); wb.total -= o.pts.length; }
+            wbRedraw();
+        } else wbPaint();
+    }
+    function wbRemove(sid) { const st = wb.map.get(sid); if (!st) return; wb.map.delete(sid); wb.strokes = wb.strokes.filter((x) => x !== st); wb.total -= st.pts.length; wbRedraw(); }
+    function wbReset() { wb.strokes = []; wb.map.clear(); wb.total = 0; wb.cur = null; wbRedraw(); }
+    function wbClean(d, maxLen = 800) {
+        if (!d || typeof d.sid !== 'string' || d.sid.length > 24 || !Array.isArray(d.pts) || d.pts.length > maxLen || d.pts.length % 2) return null;
+        const pts = []; for (const n of d.pts) { if (typeof n !== 'number' || !isFinite(n)) return null; pts.push(Math.max(-50, Math.min(1400, Math.round(n)))); }
+        return { sid: d.sid, tool: d.tool === 'eraser' ? 'eraser' : 'pen', color: /^#[0-9a-f]{6}$/i.test(d.color) ? d.color : '#000000', size: Math.max(1, Math.min(60, Number(d.size) || 4)), pts };
+    }
+    function wbNotify() { if (editorView !== 'board') $('boardDot').classList.remove('hidden'); }
+    // Aplica un mensaje remoto; devuelve el mensaje limpio para reenviarlo (anfitrión) o null.
+    function wbRemote(d, from) {
+        if (d.type === 'WB_S') { const c = wbClean(d); if (!c) return null; wbApply(c, from); wbNotify(); return { type: 'WB_S', ...c }; }
+        if (d.type === 'WB_U') { if (typeof d.sid !== 'string' || d.sid.length > 24) return null; wbRemove(d.sid); wbNotify(); return { type: 'WB_U', sid: d.sid }; }
+        if (d.type === 'WB_C') { wbReset(); wbNotify(); return { type: 'WB_C' }; }
+        if (d.type === 'WB_FULL') {
+            wb.strokes = []; wb.map.clear(); wb.total = 0;
+            for (const x of (Array.isArray(d.strokes) ? d.strokes.slice(0, 3000) : [])) {
+                const c = wbClean(x, 30000); if (!c || wb.map.has(c.sid)) continue;
+                const st = { ...c, from: String(x.from || '').slice(0, 64) }; wb.strokes.push(st); wb.map.set(st.sid, st); wb.total += st.pts.length;
+            }
+            wbRedraw(); if (wb.strokes.length) wbNotify(); return null;
+        }
+        return null;
+    }
+    function wbPos(e) {
+        const r = wbCv.getBoundingClientRect(), k = Math.min(r.width / WB_W, r.height / WB_H);
+        const ox = (r.width - WB_W * k) / 2, oy = (r.height - WB_H * k) / 2;
+        return [Math.max(0, Math.min(WB_W, Math.round((e.clientX - r.left - ox) / k))), Math.max(0, Math.min(WB_H, Math.round((e.clientY - r.top - oy) / k)))];
+    }
+    function wbFlush() {
+        const c = wb.cur; if (!c) return; const st = wb.map.get(c.sid); if (!st) return;
+        const pts = st.pts.slice(c.sent); c.sent = st.pts.length;
+        if (role === 'solo' || !pts.length) return;
+        while (pts.length) sendAll({ type: 'WB_S', sid: st.sid, tool: st.tool, color: st.color, size: st.size, pts: pts.splice(0, 400), from: myId });
+    }
+    wbCv.addEventListener('pointerdown', (e) => {
+        if (e.button > 0) return;
+        if (!wbCanDraw()) return showToast('La pizarra está en solo lectura', 'info');
+        e.preventDefault(); wbCv.setPointerCapture(e.pointerId);
+        const [x, y] = wbPos(e), sid = uid(), size = wb.tool === 'eraser' ? Math.min(60, wb.size * 4) : wb.size;
+        wb.cur = { sid, sent: 0, lx: x, ly: y, t: 0, tool: wb.tool, size };
+        wbApply({ sid, tool: wb.tool, color: wb.color, size, pts: [x, y] }, myId);
+    });
+    wbCv.addEventListener('pointermove', (e) => {
+        const c = wb.cur; if (!c) return;
+        const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : []; const list = evs.length ? evs : [e];
+        for (const ev of list) {
+            const [x, y] = wbPos(ev); if (x === c.lx && y === c.ly) continue; c.lx = x; c.ly = y;
+            wbApply({ sid: c.sid, tool: c.tool, color: wb.color, size: c.size, pts: [x, y] }, myId);
+        }
+        const now = performance.now(); if (now - c.t > 40) { c.t = now; wbFlush(); }
+    });
+    const wbEnd = () => { if (wb.cur) { wbFlush(); wb.cur = null; } };
+    wbCv.addEventListener('pointerup', wbEnd); wbCv.addEventListener('pointercancel', wbEnd);
+
+    function wbSetTool(t) { wb.tool = t; $('wbPen').classList.toggle('active', t === 'pen'); $('wbEraser').classList.toggle('active', t === 'eraser'); }
+    $('wbPen').addEventListener('click', () => wbSetTool('pen'));
+    $('wbEraser').addEventListener('click', () => wbSetTool('eraser'));
+    const WB_COLORS = ['#111827', '#ef4444', '#f59e0b', '#22c55e', '#3b82f6', '#a855f7', '#ffffff'];
+    function wbMarkColor() { document.querySelectorAll('.wb-sw').forEach((b) => b.classList.toggle('sel', b.dataset.c.toLowerCase() === wb.color.toLowerCase())); }
+    WB_COLORS.forEach((c) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'wb-sw'; b.dataset.c = c; b.style.background = c; b.setAttribute('aria-label', 'Color ' + c);
+        b.addEventListener('click', () => { wb.color = c; $('wbColor').value = c; wbSetTool('pen'); wbMarkColor(); }); $('wbSwatches').append(b); });
+    $('wbColor').addEventListener('input', (e) => { wb.color = e.target.value; wbSetTool('pen'); wbMarkColor(); });
+    $('wbSize').addEventListener('input', (e) => { wb.size = Number(e.target.value); });
+    wbMarkColor();
+    function wbUndo() {
+        if (!wbCanDraw()) return showToast('La pizarra está en solo lectura', 'info');
+        for (let i = wb.strokes.length - 1; i >= 0; i--) {
+            if (wb.strokes[i].from === myId) { const sid = wb.strokes[i].sid; wbRemove(sid); sendAll({ type: 'WB_U', sid, from: myId }); return; }
+        }
+        showToast('No tienes trazos que deshacer', 'info');
+    }
+    $('wbUndo').addEventListener('click', wbUndo);
+    $('wbClear').addEventListener('click', async () => {
+        if (!wbCanDraw()) return showToast('La pizarra está en solo lectura', 'info');
+        const msg = role === 'solo' ? 'Se borrará todo el dibujo.' : 'Se borrará el dibujo para todos en la sala.';
+        if (!(await dialog({ title: 'Vaciar pizarra', message: msg, okText: 'Vaciar', danger: true }))) return;
+        wbReset(); sendAll({ type: 'WB_C', from: myId });
+    });
+    $('wbSave').addEventListener('click', () => {
+        wbCv.toBlob((b) => {
+            if (!b) return; const url = URL.createObjectURL(b); const a = document.createElement('a');
+            a.href = url; a.download = `pizarra-${new Date().toISOString().slice(0, 10)}.png`; document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+        });
+    });
+    document.addEventListener('keydown', (e) => {
+        if (editorView === 'board' && (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z' && !/INPUT|TEXTAREA/.test(document.activeElement?.tagName || '')) { e.preventDefault(); wbUndo(); }
+    });
+    wbRedraw(); setView(store.get('p2p_view', 'text'));
+
+    // ---------- Moderación (acciones del anfitrión) ----------
+    function sendMod(id) {
+        const e = conns.get(id); if (!e) return; const m = getMod(id);
+        safeSend(e.conn, { type: 'MOD', editor: m.editor, chat: m.chat, slow: m.slow });   // el shadow NO se comunica al usuario
+    }
+    function setMod(id, patch) {
+        const e = conns.get(id); if (!e) return; const m = getMod(id); Object.assign(m, patch);
+        sendMod(id); renderRoster();
+        if ('editor' in patch) showToast(`${e.name}: editor ${m.editor === 'ro' ? 'en solo lectura' : 'editable'}`, 'info');
+        if ('chat' in patch) showToast(`${e.name}: chat ${m.chat === 'ro' ? 'en solo lectura' : 'habilitado'}`, 'info');
+        if ('slow' in patch) showToast(m.slow ? `${e.name}: 1 mensaje cada ${m.slow} s` : `${e.name}: modo lento desactivado`, 'info');
+        if ('shadow' in patch) showToast(m.shadow ? `${e.name}: shadow activado (solo tú ves sus mensajes, marcados)` : `${e.name}: shadow desactivado`, 'info');
+    }
+    const modMenu = document.createElement('div'); modMenu.className = 'mod-menu hidden'; document.body.append(modMenu);
+    function closeModMenu() { modMenu.classList.add('hidden'); }
+    function openModMenu(id, anchor) {
+        const e = conns.get(id); if (!e) return; const m = getMod(id);
+        modMenu.textContent = '';
+        const head = document.createElement('div'); head.className = 'mod-head'; head.textContent = 'Moderar a ' + e.name; modMenu.append(head);
+        const item = (label, on, fn, danger) => {
+            const b = document.createElement('button'); b.type = 'button'; b.className = 'mod-item' + (danger ? ' danger' : '');
+            const t = document.createElement('span'); t.textContent = label; const ck = document.createElement('span'); ck.className = 'ck'; ck.textContent = on ? '✓' : '';
+            b.append(t, ck); b.addEventListener('click', () => { closeModMenu(); fn(); }); modMenu.append(b);
+        };
+        const sep = () => { const d = document.createElement('div'); d.className = 'mod-sep'; modMenu.append(d); };
+        item('Editor: solo lectura', m.editor === 'ro', () => setMod(id, { editor: m.editor === 'ro' ? 'rw' : 'ro' }));
+        item('Chat: solo lectura', m.chat === 'ro', () => setMod(id, { chat: m.chat === 'ro' ? 'rw' : 'ro' }));
+        item(m.slow ? `Modo lento: cada ${m.slow} s…` : 'Modo lento (temporizador)…', m.slow > 0, async () => {
+            const v = await dialog({ title: 'Modo lento', message: `Segundos que debe esperar «${e.name}» entre un mensaje y el siguiente (1–3600). Pon 0 para desactivarlo.`, input: String(m.slow || ''), placeholder: '10', okText: 'Aplicar' });
+            if (v === null) return; setMod(id, { slow: Math.max(0, Math.min(3600, Math.floor(Number(v) || 0))) });
+        });
+        item('Shadow-limitar chat (invisible)', m.shadow, () => setMod(id, { shadow: !m.shadow }));
+        sep();
+        item('Expulsar', false, () => kick(id), true);
+        item('Banear…', false, () => banPeer(id), true);
+        modMenu.classList.remove('hidden');
+        const r = anchor.getBoundingClientRect(), w = modMenu.offsetWidth, h = modMenu.offsetHeight;
+        modMenu.style.left = Math.min(Math.max(8, r.right - w), window.innerWidth - w - 8) + 'px';
+        modMenu.style.top = (r.bottom + 6 + h > window.innerHeight ? Math.max(8, r.top - h - 6) : r.bottom + 6) + 'px';
+    }
+    document.addEventListener('click', (ev) => { if (!modMenu.classList.contains('hidden') && !ev.target.closest('.mod-menu, .mod-open')) closeModMenu(); });
+    document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeModMenu(); });
+    async function banPeer(id) {
+        const e = conns.get(id); if (!e) return;
+        if (!(await dialog({ title: `Banear a ${e.name}`, message: 'Será expulsado y no podrá volver a entrar a tus salas con este ID ni desde este dispositivo. Podrás perdonarlo desde la lista de baneados.', okText: 'Banear', danger: true }))) return;
+        if (conns.get(id) !== e) return;
+        bans.push({ id, dev: e.dev || '', name: e.name }); saveBans(); renderBans();
+        safeSend(e.conn, { type: 'KICK', ban: true }); showToast(`${e.name} fue baneado`, 'info');
+        setTimeout(() => { try { e.conn.close(); } catch {} hostOnClosed(e); }, 150);
+    }
+    function renderBans() {
+        const wrap = $('banWrap'), ul = $('banList'); if (!wrap) return;
+        wrap.classList.toggle('hidden', !bans.length || role === 'guest'); ul.textContent = '';
+        for (const b of bans) {
+            const li = document.createElement('li'); li.className = 'flex items-center gap-2 text-xs';
+            const nm = document.createElement('span'); nm.className = 'flex-1 truncate'; nm.textContent = b.name;
+            const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn btn-ghost'; bt.style.padding = '.15rem .5rem'; bt.textContent = 'Perdonar';
+            bt.addEventListener('click', () => { bans = bans.filter((x) => x !== b); saveBans(); renderBans(); showToast(`${b.name} ya puede volver a entrar`, 'info'); });
+            li.append(nm, bt); ul.append(li);
+        }
+    }
+
+    // ---------- Moderación (lado del usuario) ----------
+    function applyModUI() {
+        const inRoom = role !== 'solo', m = role === 'guest' ? myMod : { editor: 'rw', chat: 'rw', slow: 0 };
+        const cd = Math.max(0, Math.ceil((chatCooldownUntil - Date.now()) / 1000));
+        const locked = inRoom && (m.chat === 'ro' || cd > 0);
+        chatInput.disabled = !inRoom || locked; sendMsgBtn.disabled = chatInput.disabled; uploadImgBtn.disabled = chatInput.disabled;
+        chatInput.placeholder = !inRoom ? 'Mensaje…'
+            : m.chat === 'ro' ? '🔒 El anfitrión limitó tu chat a solo lectura'
+            : cd > 0 ? `⏱ Modo lento: podrás escribir en ${cd} s`
+            : m.slow > 0 ? `Modo lento: 1 mensaje cada ${m.slow} s`
+            : 'Mensaje… (@ menciona · //texto// destaca)';
+    }
+    function startCooldown(sec) {
+        chatCooldownUntil = Date.now() + sec * 1000; clearInterval(chatCooldownTimer);
+        chatCooldownTimer = setInterval(() => {
+            applyModUI();
+            if (Date.now() >= chatCooldownUntil) { clearInterval(chatCooldownTimer); chatCooldownTimer = null; applyModUI(); if (!chatInput.disabled) chatInput.focus(); }
+        }, 250);
+        applyModUI();
+    }
+    function onMod(d) {
+        const next = { editor: d.editor === 'ro' ? 'ro' : 'rw', chat: d.chat === 'ro' ? 'ro' : 'rw', slow: Math.max(0, Math.min(3600, Math.floor(Number(d.slow) || 0))) };
+        const prev = myMod; myMod = next;
+        if (prev.editor !== next.editor) showToast(next.editor === 'ro' ? 'El anfitrión limitó el editor a solo lectura' : 'Ya puedes editar de nuevo', next.editor === 'ro' ? 'error' : 'success');
+        if (prev.chat !== next.chat) showToast(next.chat === 'ro' ? 'El anfitrión limitó tu chat a solo lectura' : 'Ya puedes escribir en el chat', next.chat === 'ro' ? 'error' : 'success');
+        if (prev.slow !== next.slow) { showToast(next.slow ? `Modo lento: 1 mensaje cada ${next.slow} s` : 'Modo lento desactivado', 'info'); if (!next.slow) chatCooldownUntil = 0; }
+        refreshUI();
+    }
+    function onModDeny(d) {
+        if (d.why === 'slow') { startCooldown(Math.max(1, Math.min(3600, Number(d.wait) || 1))); showToast('Modo lento: espera un momento antes de escribir', 'info'); }
+        else showToast('El anfitrión limitó tu chat a solo lectura', 'error');
+        sysMsg('⛔ Tu último mensaje no se envió');
+    }
+
     // ---------- Chat ----------
     const seenMsgs = new Set();
     function linkNodes(text) {
         const frag = document.createDocumentFragment(); const re = /https?:\/\/[^\s<>"']+/g; let last = 0, m;
         while ((m = re.exec(text))) {
             const url = m[0].replace(/[.,;:!?)\]]+$/, '');
-            frag.append(text.slice(last, m.index));
+            frag.append(mentionNodes(text.slice(last, m.index)));
             const a = document.createElement('a'); a.href = url; a.textContent = url; a.target = '_blank'; a.rel = 'noopener noreferrer nofollow';
             frag.append(a); last = m.index + url.length; re.lastIndex = last;
         }
-        frag.append(text.slice(last)); return frag;
+        frag.append(mentionNodes(text.slice(last))); return frag;
     }
     function renderMsg(m) {
         const empty = $('emptyChat'); if (empty && empty.parentNode) empty.remove();
@@ -1053,27 +1587,58 @@
             const d = document.createElement('div'); d.className = 'text-center text-[10px] muted py-0.5'; d.textContent = m.text;
             chatContainer.append(d);
         } else {
-            const wrap = document.createElement('div'); wrap.className = `flex flex-col ${m.mine ? 'items-end' : 'items-start'} gap-1`;
+            const wrap = document.createElement('div'); wrap.className = `msg flex flex-col ${m.mine ? 'items-end' : 'items-start'} gap-1`; wrap.style.position = 'relative';
+            if (m.id) wrap.dataset.mid = m.id;
             const head = document.createElement('div'); head.className = 'flex items-center gap-1.5 px-1';
             const nm = document.createElement('span'); nm.className = 'text-[10px] font-semibold'; nm.style.color = m.mine ? 'var(--color-primary)' : `hsl(${hueOf(m.from || m.name)} 70% 62%)`; nm.textContent = m.name;
+            if (!m.mine) {
+                nm.style.cursor = 'pointer'; nm.title = 'Mencionar a ' + m.name;
+                nm.addEventListener('click', () => {
+                    if (chatInput.disabled) return;
+                    chatInput.value += (chatInput.value && !/\s$/.test(chatInput.value) ? ' ' : '') + '@' + m.name + ' ';
+                    chatInput.focus(); chatInput.dispatchEvent(new Event('input'));
+                });
+            }
             const tm = document.createElement('span'); tm.className = 'text-[9px] muted'; tm.textContent = fmtTime(m.ts);
-            head.append(nm, tm); wrap.append(head);
+            head.append(nm, tm);
+            if (m.shadow) { const g = document.createElement('span'); g.className = 'chip neutral'; g.style.cssText = 'padding:.02rem .4rem;font-size:.58rem'; g.textContent = '👻 oculto para los demás'; head.append(g); }
+            wrap.append(head);
+            const row = document.createElement('div'); row.className = 'msg-row' + (m.mine ? ' mine' : '');
+            let special = false;
             if (m.img) {
                 const img = document.createElement('img'); img.className = 'chat-img'; img.alt = 'Imagen de ' + m.name; img.src = m.img; img.loading = 'lazy';
                 img.addEventListener('click', () => { $('lightboxImg').src = m.img; $('lightbox').classList.remove('hidden'); });
-                wrap.append(img);
+                row.append(img);
             } else {
-                const b = document.createElement('div'); b.className = 'bubble ' + (m.mine ? 'me' : 'them'); b.append(linkNodes(m.text)); wrap.append(b);
+                const sp = SPECIAL_RE.exec(m.text.trim()); special = !!sp;
+                const b = document.createElement('div'); b.className = 'bubble ' + (m.mine ? 'me' : 'them') + (special ? ' special' : '') + (m.shadow ? ' shadowed' : '');
+                b.append(linkNodes(special ? sp[1].trim() : m.text));
+                if (!m.mine && mentionsMe(m.text)) b.classList.add('mentioned');
+                row.append(b);
             }
+            if (m.id) {
+                const add = document.createElement('button'); add.type = 'button'; add.className = 'react-add'; add.textContent = '😊'; add.title = 'Reaccionar'; add.setAttribute('aria-label', 'Reaccionar');
+                add.addEventListener('click', (e) => { e.stopPropagation(); openReactPicker(m.id, add); });
+                row.append(add);
+            }
+            wrap.append(row);
+            const rr = document.createElement('div'); rr.className = 'react-row' + (m.mine ? ' justify-end' : ''); wrap.append(rr);
+            if (m.id) { msgEls.set(m.id, rr); renderReactions(m.id); }
             chatContainer.append(wrap);
+            if (special) burst(wrap);
         }
-        while (chatContainer.children.length > 300) chatContainer.firstChild.remove();
+        while (chatContainer.children.length > 300) {
+            const o = chatContainer.firstChild;
+            if (o.dataset && o.dataset.mid) { msgEls.delete(o.dataset.mid); reacts.delete(o.dataset.mid); }
+            o.remove();
+        }
         chatContainer.scrollTop = chatContainer.scrollHeight;
     }
     const sysMsg = (text) => renderMsg({ system: true, text });
     function showIncoming(m) {
         if (seenMsgs.has(m.id)) return; seenMsgs.add(m.id); if (seenMsgs.size > 500) seenMsgs.delete(seenMsgs.values().next().value);
         renderMsg({ ...m, mine: false }); beep(); bumpUnread();
+        if (m.text && mentionsMe(m.text)) showToast(`${m.name} te mencionó`, 'info');
     }
     function validChat(d) {
         if (d.type === 'CHAT') return typeof d.text === 'string' && d.text.length > 0 && d.text.length <= 5000;
@@ -1082,6 +1647,11 @@
     }
     function sendChat(payload) {
         if (role === 'solo') return;
+        if (role === 'guest') {
+            if (myMod.chat === 'ro') { showToast('El anfitrión limitó tu chat a solo lectura', 'error'); return; }
+            if (Date.now() < chatCooldownUntil) return;
+            if (myMod.slow > 0) startCooldown(myMod.slow);
+        }
         const msg = { ...payload, id: uid(), from: myId, name: myName, ts: Date.now() };
         seenMsgs.add(msg.id);
         renderMsg({ ...msg, mine: true });
@@ -1240,6 +1810,8 @@
             if (entry.helloSeen) return; entry.helloSeen = true;
             const name = cleanName(d.name);
             const rejectNow = (reason) => { safeSend(entry.conn, { type: 'REJECT', reason }); setTimeout(() => entry.conn.close(), 300); };
+            entry.dev = String(d.dev || '').slice(0, 40);
+            if (bans.some((b) => b.id === entry.conn.peer || (entry.dev && b.dev === entry.dev))) return rejectNow('banned');
             const wanted = d.mode === 'dm' ? 'dm' : 'room', hm = hostMode();
             if (wanted !== hm) return rejectNow(hm === 'room' ? 'isroom' : 'isdm');
             const readyCount = [...conns.values()].filter((e) => e.ready).length;
@@ -1262,19 +1834,37 @@
         switch (d.type) {
             case 'RENAME': entry.name = cleanName(d.name); broadcastRoster(); refreshUI(); break;
             case 'Y_UPDATE':
-                if (roomSettings.readonly || !Y || typeof d.u !== 'string') return;
+                if (roomSettings.readonly || getMod(from).editor === 'ro' || !Y || typeof d.u !== 'string') return;
                 try { Y.applyUpdate(ydoc, b64dec(d.u), entry.conn); } catch (e) { console.warn('update inválido', e); }
                 break;
             case 'TEXT_FULL':
-                if (roomSettings.readonly || Y || typeof d.text !== 'string' || d.text.length > 2_000_000) return;
+                if (roomSettings.readonly || getMod(from).editor === 'ro' || Y || typeof d.text !== 'string' || d.text.length > 2_000_000) return;
                 setEditorTextRaw(d.text); sendAll({ type: 'TEXT_FULL', text: d.text }, entry.conn); break;
             case 'CHAT': case 'IMG': {
                 if (!validChat(d)) return;
+                const mod = getMod(from);
+                if (mod.chat === 'ro') { safeSend(entry.conn, { type: 'MODDENY', why: 'ro' }); return; }
+                if (mod.slow > 0) {
+                    const now = Date.now(), wait = (entry.lastChat || 0) + mod.slow * 1000 - now;
+                    if (wait > 0) { safeSend(entry.conn, { type: 'MODDENY', why: 'slow', wait: Math.ceil(wait / 1000) }); return; }
+                    entry.lastChat = now;
+                }
                 const clean = { type: d.type, id: String(d.id || uid()).slice(0, 24), from, name: entry.name, ts: Date.now(), ...(d.type === 'CHAT' ? { text: d.text } : { img: d.img }) };
+                if (mod.shadow) { showIncoming({ ...clean, shadow: true }); return; }   // shadow: solo lo ve el anfitrión (marcado); no se reenvía
                 showIncoming(clean); sendAll(clean, entry.conn); break;
+            }
+            case 'REACT': {
+                const r = cleanReact(d); if (!r) return;
+                if (getMod(from).shadow) break;
+                applyReact(r.mid, r.emoji, from, r.on); sendAll({ type: 'REACT', ...r, from }, entry.conn); break;
+            }
+            case 'WB_S': case 'WB_U': case 'WB_C': {
+                if (roomSettings.readonly || getMod(from).editor === 'ro') return;
+                const out = wbRemote(d, from); if (out) sendAll({ ...out, from }, entry.conn); break;
             }
             case 'TYPING': {
                 const scope = d.scope === 'chat' ? 'chat' : 'doc';
+                if (getMod(from).shadow) break;
                 setTyper(scope, entry.name, !!d.on); sendAll({ type: 'TYPING', scope, on: !!d.on, from, name: entry.name }, entry.conn); break;
             }
         }
@@ -1284,6 +1874,8 @@
         const welcome = { type: 'WELCOME', mode: hostMode(), hostId: myId, hostName: myName, settings: { ...roomSettings }, peers: currentRoster().map(({ id, name: n }) => ({ id, name: n })) };
         if (Y) welcome.u = b64enc(Y.encodeStateAsUpdate(ydoc)); else welcome.text = editor.value;
         safeSend(entry.conn, welcome);
+        { const mm = modsById.get(entry.conn.peer); if (mm && (mm.editor === 'ro' || mm.chat !== 'rw' || mm.slow)) sendMod(entry.conn.peer); }
+        if (wb.strokes.length) safeSend(entry.conn, { type: 'WB_FULL', strokes: wb.strokes.map(({ sid, tool, color, size, pts, from }) => ({ sid, tool, color, size, pts, from })) });
         sysMsg(hostMode() === 'dm' ? `${name} inició un chat directo contigo` : `${name} se unió a la sala`); beep();
         broadcastRoster(); refreshUI(); showToast(`${name} se ha conectado`, 'success');
     }
@@ -1318,7 +1910,7 @@
         lastMode = mode;
         const conn = peer.connect(remoteId, { reliable: true });
         pendingJoin = conn; refreshUI();
-        conn.on('open', () => safeSend(conn, { type: 'HELLO', name: myName, mode }));
+        conn.on('open', () => safeSend(conn, { type: 'HELLO', name: myName, mode, dev: deviceId }));
         conn.on('data', (d) => guestOnData(conn, d));
         conn.on('close', () => guestOnClosed(conn));
         conn.on('error', (e) => console.warn('conn error', e));
@@ -1334,10 +1926,10 @@
         switch (d.type) {
             case 'WELCOME': if (conn === pendingJoin) onWelcome(conn, d); break;
             case 'REJECT': {
-                const msgs = { busy: 'Ese usuario ya está en otra sala o chat.', full: 'La sala está llena.', denied: 'El anfitrión rechazó tu conexión.', isroom: 'Ese ID es una sala de grupo: usa «Unirse a sala».', isdm: 'Ese ID es de un usuario (chat directo): usa la pestaña Chat.', dmfull: 'Ese usuario ya está en un chat directo con otra persona.' };
+                const msgs = { busy: 'Ese usuario ya está en otra sala o chat.', full: 'La sala está llena.', denied: 'El anfitrión rechazó tu conexión.', isroom: 'Ese ID es una sala de grupo: usa «Unirse a sala».', isdm: 'Ese ID es de un usuario (chat directo): usa la pestaña Chat.', dmfull: 'Ese usuario ya está en un chat directo con otra persona.', banned: 'Has sido baneado de esta sala.' };
                 lastHostId = null; showToast(msgs[d.reason] || 'Conexión rechazada.', 'error'); cancelPendingJoin(); break;
             }
-            case 'KICK': lastHostId = null; manualLeave = true; showToast('Has sido expulsado de la sala.', 'error'); break;
+            case 'KICK': lastHostId = null; manualLeave = true; showToast(d.ban ? 'Has sido baneado de esta sala.' : 'Has sido expulsado de la sala.', 'error'); break;
             case 'BYE': lastHostId = null; manualLeave = true; break;
             case 'PEERS': if (conn === hostConn && Array.isArray(d.peers)) { hostIdOfRoom = String(d.hostId || hostIdOfRoom); guestRoster = d.peers.slice(0, 20).map((p) => ({ id: String(p.id).slice(0, 64), name: cleanName(p.name) })); refreshUI(); } break;
             case 'SETTINGS': if (conn === hostConn && d.settings) { roomSettings.readonly = !!d.settings.readonly; roomSettings.approve = !!d.settings.approve; refreshUI(); } break;
@@ -1345,6 +1937,10 @@
             case 'TEXT_FULL': if (conn === hostConn && !Y && typeof d.text === 'string' && d.text.length <= 2_000_000) setEditorTextRaw(d.text); break;
             case 'CHAT': case 'IMG': if (conn === hostConn && validChat(d)) showIncoming({ type: d.type, id: String(d.id || uid()).slice(0, 24), from: String(d.from || '').slice(0, 64), name: cleanName(d.name), ts: Number(d.ts) || Date.now(), text: d.text, img: d.img }); break;
             case 'TYPING': if (conn === hostConn) setTyper(d.scope === 'chat' ? 'chat' : 'doc', cleanName(d.name), !!d.on); break;
+            case 'REACT': if (conn === hostConn) { const r = cleanReact(d); if (r) applyReact(r.mid, r.emoji, String(d.from || '').slice(0, 64), r.on); } break;
+            case 'WB_S': case 'WB_U': case 'WB_C': case 'WB_FULL': if (conn === hostConn) wbRemote(d, String(d.from || '').slice(0, 64)); break;
+            case 'MOD': if (conn === hostConn) onMod(d); break;
+            case 'MODDENY': if (conn === hostConn) onModDeny(d); break;
         }
     }
     function onWelcome(conn, d) {
@@ -1358,13 +1954,13 @@
         else if (typeof d.text === 'string') { editor.value = d.text; mirror = d.text; }
         if (prev.trim() && prev !== editor.value) { store.set('p2p_backup_doc', prev); refreshBackupBtn(); showToast('Documento de la sala cargado. Tu texto anterior se guardó como copia (icono ⟲).', 'info'); }
         else showToast('Conectado y sincronizado', 'success');
-        updateStats(); scheduleSave(); sysMsg(roomMode === 'dm' ? 'Chat directo iniciado' : 'Te has unido a la sala'); refreshUI();
+        wbReset(); updateStats(); scheduleSave(); sysMsg(roomMode === 'dm' ? 'Chat directo iniciado' : 'Te has unido a la sala'); refreshUI();
     }
     function guestOnClosed(conn) {
         if (conn !== hostConn && conn !== pendingJoin) return;
         const wasJoined = conn === hostConn;
         if (pendingJoin === conn) { clearTimeout(joinTimer); pendingJoin = null; }
-        hostConn = null; role = 'solo'; guestRoster = []; hostIdOfRoom = ''; roomSettings.readonly = false; roomSettings.approve = false;
+        myMod = { editor: 'rw', chat: 'rw', slow: 0 }; chatCooldownUntil = 0; hostConn = null; role = 'solo'; guestRoster = []; hostIdOfRoom = ''; roomSettings.readonly = false; roomSettings.approve = false;
         typers.doc.clear(); typers.chat.clear(); renderTyping();
         if (wasJoined) {
             sysMsg('Desconectado de la sala');
